@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Gem, Lock } from 'lucide-react'
+import { Gem, Lock, User } from 'lucide-react'
 
 // สไตล์อ้างอิง: การ์ดมืดลอยบนพื้นหลังดาว/หมอกม่วงชมพู ปุ่ม gradient ชมพูเต็มความกว้าง
 // รีแบรนด์เป็น PAYI Floor / ของแตง — ตัดช่อง Username ออก ระบบนี้ใช้รหัสผ่านเดียวไม่มี username
@@ -15,6 +15,7 @@ function Stars() {
 }
 
 export default function Login({ onSuccess }) {
+  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -62,8 +63,20 @@ export default function Login({ onSuccess }) {
       }}>
         <h3 style={{ margin: '0 0 18px', fontSize: 15, fontWeight: 700, color: '#fff' }}>เข้าสู่ระบบ</h3>
 
+        <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,.7)', marginBottom: 14 }}>
+          Username
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid rgba(255,255,255,.12)', borderRadius: 10, padding: '10px 12px', background: 'rgba(255,255,255,.06)' }}>
+            <User size={15} color="rgba(255,255,255,.5)" />
+            <input
+              type="text" value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              style={{ border: 'none', outline: 'none', background: 'transparent', fontSize: 14, color: '#fff', flex: 1 }}
+            />
+          </div>
+        </label>
+
         <label style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,.7)' }}>
-          รหัสผ่าน
+          Password
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, border: '1px solid rgba(255,255,255,.12)', borderRadius: 10, padding: '10px 12px', background: 'rgba(255,255,255,.06)' }}>
             <Lock size={15} color="rgba(255,255,255,.5)" />
             <input
@@ -89,7 +102,7 @@ export default function Login({ onSuccess }) {
         </button>
       </form>
 
-      <div style={{ position: 'relative', zIndex: 1, marginTop: 22, fontSize: 11, color: 'rgba(255,255,255,.35)' }}>PAYI Floor © 2026</div>
+      <div style={{ position: 'relative', zIndex: 1, marginTop: 22, fontSize: 11, color: 'rgba(255,255,255,.35)' }}>PAYI Health Care © 2026</div>
     </div>
   )
 }
