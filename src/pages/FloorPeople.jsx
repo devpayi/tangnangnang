@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Trash2, UserPlus, Users } from 'lucide-react'
+import { Trash2, UserPlus, Users, Pencil, Check, X } from 'lucide-react'
 import Sparkles from '../Sparkles.jsx'
 import EmptyState from '../EmptyState.jsx'
 
@@ -45,6 +45,9 @@ export default function FloorPeople() {
   const [error, setError] = useState('')
   const [form, setForm] = useState({ name: '', role: '', phone: '', note: '' })
   const [saving, setSaving] = useState(false)
+  const [editingId, setEditingId] = useState(null)
+  const [editForm, setEditForm] = useState({ name: '', role: '', phone: '', note: '' })
+  const [editSaving, setEditSaving] = useState(false)
 
   const load = () => {
     setLoading(true)
@@ -69,9 +72,24 @@ export default function FloorPeople() {
     } catch (e) { setError(e.message) } finally { setSaving(false) }
   }
 
-  const removePerson = async (id) => {
+  const startEdit = (p) => { setEditingId(p.id); setEditForm({ name: p.name, role: p.role, phone: p.phone, note: p.note }) }
+  const cancelEdit = () => setEditingId(null)
+
+  const saveEdit = async (id) => {
+    if (!editForm.name.trim()) return
+    setEditSaving(true)
     try {
-      const res = await fetch('/api/floor-people', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'remove', id }) })
+      const res = await fetch('/api/floor-people', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, ...editForm }) })
+      const d = await res.json()
+      if (!d.success) throw new Error(d.error)
+      setEditingId(null)
+      load()
+    } catch (e) { setError(e.message) } finally { setEditSaving(false) }
+  }
+
+  const removePerson = async (id, name) => {
+    try {
+      const res = await fetch('/api/floor-people', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'remove', id, name }) })
       const d = await res.json()
       if (!d.success) throw new Error(d.error)
       load()
@@ -151,25 +169,64 @@ export default function FloorPeople() {
                 </tr>
               </thead>
               <tbody>
-                {people.map((p, i) => (
-                  <tr key={p.id} style={{ background: i % 2 === 0 ? 'rgba(255,255,255,.55)' : 'rgba(255,255,255,.28)' }}>
-                    <td style={{ padding: '10px 12px', borderRadius: '10px 0 0 10px', fontWeight: 700, color: '#1C1C28' }}>{p.name}</td>
-                    <td style={{ padding: '10px 12px', color: '#4a4560' }}>{p.role || '-'}</td>
-                    <td style={{ padding: '10px 12px', color: '#4a4560' }}>{p.phone || '-'}</td>
-                    <td style={{ padding: '10px 12px', color: '#6C6C80' }}>{p.note || '-'}</td>
-                    <td style={{ padding: '10px 12px', borderRadius: '0 10px 10px 0' }}>
-                      <button
-                        onClick={() => removePerson(p.id)}
-                        style={{
-                          background: 'rgba(255,255,255,.6)', border: '1px solid rgba(225,29,72,.35)', color: '#dc2626',
-                          borderRadius: 10, padding: '5px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 600,
-                        }}
-                      >
-                        <Trash2 size={13} /> ลบ
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {people.map((p, i) => {
+                  const isEditing = editingId === p.id
+                  return (
+                    <tr key={p.id} style={{ background: i % 2 === 0 ? 'rgba(255,255,255,.55)' : 'rgba(255,255,255,.28)' }}>
+                      {isEditing ? (
+                        <>
+                          <td style={{ padding: '6px 8px', borderRadius: '10px 0 0 10px' }}>
+                            <input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} style={{ ...inputStyle, width: '100%', padding: '5px 8px' }} />
+                          </td>
+                          <td style={{ padding: '6px 8px' }}>
+                            <input value={editForm.role} onChange={(e) => setEditForm({ ...editForm, role: e.target.value })} style={{ ...inputStyle, width: '100%', padding: '5px 8px' }} />
+                          </td>
+                          <td style={{ padding: '6px 8px' }}>
+                            <input value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} style={{ ...inputStyle, width: '100%', padding: '5px 8px' }} />
+                          </td>
+                          <td style={{ padding: '6px 8px' }}>
+                            <input value={editForm.note} onChange={(e) => setEditForm({ ...editForm, note: e.target.value })} style={{ ...inputStyle, width: '100%', padding: '5px 8px' }} />
+                          </td>
+                          <td style={{ padding: '6px 8px', borderRadius: '0 10px 10px 0', display: 'flex', gap: 6 }}>
+                            <button onClick={() => saveEdit(p.id)} disabled={editSaving} style={{ background: 'rgba(255,255,255,.6)', border: '1px solid rgba(4,120,87,.35)', color: '#047857', borderRadius: 10, padding: '5px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                              <Check size={13} />
+                            </button>
+                            <button onClick={cancelEdit} style={{ background: 'rgba(255,255,255,.6)', border: '1px solid #e1d5f7', color: '#6C6C80', borderRadius: 10, padding: '5px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                              <X size={13} />
+                            </button>
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td style={{ padding: '10px 12px', borderRadius: '10px 0 0 10px', fontWeight: 700, color: '#1C1C28' }}>{p.name}</td>
+                          <td style={{ padding: '10px 12px', color: '#4a4560' }}>{p.role || '-'}</td>
+                          <td style={{ padding: '10px 12px', color: '#4a4560' }}>{p.phone || '-'}</td>
+                          <td style={{ padding: '10px 12px', color: '#6C6C80' }}>{p.note || '-'}</td>
+                          <td style={{ padding: '10px 12px', borderRadius: '0 10px 10px 0', display: 'flex', gap: 6 }}>
+                            <button
+                              onClick={() => startEdit(p)}
+                              style={{
+                                background: 'rgba(255,255,255,.6)', border: '1px solid rgba(110,86,207,.35)', color: '#6E56CF',
+                                borderRadius: 10, padding: '5px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 600,
+                              }}
+                            >
+                              <Pencil size={13} /> แก้ไข
+                            </button>
+                            <button
+                              onClick={() => removePerson(p.id, p.name)}
+                              style={{
+                                background: 'rgba(255,255,255,.6)', border: '1px solid rgba(225,29,72,.35)', color: '#dc2626',
+                                borderRadius: 10, padding: '5px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, fontWeight: 600,
+                              }}
+                            >
+                              <Trash2 size={13} /> ลบ
+                            </button>
+                          </td>
+                        </>
+                      )}
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>

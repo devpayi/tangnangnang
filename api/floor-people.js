@@ -1,6 +1,9 @@
 // GET  /api/floor-people — รายชื่อทีมบ้านล่างที่แตงดูแล
-// POST /api/floor-people { action: 'upsert'|'remove', ...fields }
+//      base list ดึงจาก workforce_people อัตโนมัติ (ทุกคนยกเว้นออฟฟิศ — คนแพ็ก/คนฟีด/พาร์ทไทม์/อื่นๆ)
+//      floor_people sheet เก็บแค่ส่วนเสริม (เบอร์โทร/โน้ต/บทบาทที่แก้เอง) key ด้วย id = code เดียวกับ workforce_people
+//      คนที่ไม่ได้อยู่ใน workforce_people (เช่น contact ภายนอก) ยังเพิ่มเองผ่าน POST ได้ตามปกติ (id สุ่ม)
 import { getSheet, appendRows, overwriteSheet, ensureSheet } from './_lib/sheets.js'
+import { getPersonMap } from './_lib/workforce.js'
 
 const SHEET = 'floor_people'
 const HEADERS = ['id', 'name', 'role', 'phone', 'note', 'active', 'created_at', 'updated_at']
@@ -18,11 +21,15 @@ const toRow = (r) => HEADERS.map((h) => (h === 'phone' ? forceText(r[h]) : (r[h]
 export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
-      const rows = await loadAll()
+      const [personMap, floorRows] = await Promise.all([getPersonMap().catch(() => ({})), loadAll()])
+      const overrideByCode = new Map(floorRows.map((r) => [r.id, r]))
       const includeInactive = req.query.includeInactive === '1'
-      const people = rows
-        .filter((r) => includeInactive || r.active === '1')
-        .map((r) => ({ id: r.id, name: r.name, role: r.role, phone: r.phone, note: r.note, active: r.active === '1' }))
+      const roster = Object.entries(personMap).map(([code, [name, group]]) => {
+        const o = overrideByCode.get(code)
+        return { id: code, name: o?.name || name, role: o?.role || group, phone: o?.phone || '', note: o?.note || '', active: o ? o.active === '1' : true }
+      })
+      const extra = floorRows.filter((r) => r.id && !personMap[r.id]).map((r) => ({ id: r.id, name: r.name, role: r.role, phone: r.phone, note: r.note, active: r.active === '1' }))
+      const people = [...roster, ...extra].filter((p) => includeInactive || p.active)
       return res.status(200).json({ success: true, people })
     }
 
@@ -33,7 +40,13 @@ export default async function handler(req, res) {
       const id = String(b.id || '').trim()
       if (!id) return res.status(400).json({ success: false, error: 'ต้องระบุ id' })
       const rows = await loadAll()
-      const next = rows.map((r) => (r.id === id ? { ...r, active: '', updated_at: new Date().toISOString() } : r))
+      const now = new Date().toISOString()
+      const exists = rows.some((r) => r.id === id)
+      // id อาจเป็น code จาก workforce_people ที่ยังไม่เคยมี override row ใน floor_people มาก่อน (roster ล้วนๆ)
+      // ต้อง append แถว inactive ใหม่แทนการ map เฉยๆ ไม่งั้นจะ no-op เงียบๆ แล้วคนนั้นยังโผล่อยู่ (มาจาก personMap ใน GET)
+      const next = exists
+        ? rows.map((r) => (r.id === id ? { ...r, active: '', updated_at: now } : r))
+        : [...rows, { id, name: String(b.name || id), role: '', phone: '', note: '', active: '', created_at: now, updated_at: now }]
       await overwriteSheet(SHEET, HEADERS, next.map(toRow))
       return res.status(200).json({ success: true })
     }
