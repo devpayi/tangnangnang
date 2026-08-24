@@ -1,0 +1,53 @@
+@keyframes payi-spin { to { transform: rotate(360deg); } }
+.payi-spin { animation: payi-spin 1s linear infinite; }
+body { margin: 0; font-family: 'Segoe UI', Inter, system-ui, sans-serif; }
+:root { --payi-gradient-primary: linear-gradient(135deg, #2563eb, #0b63d8); }
+
+/* ---- Chrome / futuristic-glass accents (Nova Glass style) ---- */
+@keyframes payi-chrome-shine { to { background-position: 200% center; } }
+.chrome-text {
+  background: linear-gradient(100deg, #7c7c96 0%, #ffffff 22%, #b9c2ff 38%, #6E56CF 52%, #ffffff 68%, #9aa5d6 84%, #7c7c96 100%);
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: payi-chrome-shine 7s linear infinite;
+}
+.payi-status-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: 999px;
+  background: rgba(255,255,255,.55);
+  border: 1px solid rgba(255,255,255,.9);
+  box-shadow: 0 1px 0 rgba(255,255,255,.9) inset, 0 4px 14px rgba(148,163,255,.18);
+  font-size: 10.5px; font-weight: 700; color: #6E56CF; letter-spacing: .3px;
+}
+.payi-status-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: #34d399; flex-shrink: 0;
+  box-shadow: 0 0 0 3px rgba(52,211,153,.25);
+}
+
+/* ---- Glitter ✨ sparkle particles ---- */
+@keyframes payi-twinkle {
+  0%, 100% { opacity: 0; transform: scale(.3) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1) rotate(180deg); }
+}
+@keyframes payi-drift {
+  0% { transform: translateY(0) translateX(0); }
+  50% { transform: translateY(-6px) translateX(3px); }
+  100% { transform: translateY(0) translateX(0); }
+}
+.payi-sparkle-field {
+  position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 1;
+}
+.payi-sparkle {
+  position: absolute; width: 10px; height: 10px; pointer-events: none;
+  background:
+    radial-gradient(circle, #fff 0%, rgba(255,255,255,0) 70%);
+  clip-path: polygon(50% 0%, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0% 50%, 38% 38%);
+  animation: payi-twinkle 2.4s ease-in-out infinite, payi-drift 4s ease-in-out infinite;
+  filter: drop-shadow(0 0 4px rgba(255,255,255,.9));
+}
+.payi-sparkle.tint-purple { background: radial-gradient(circle, #d8ccff 0%, rgba(216,204,255,0) 70%); filter: drop-shadow(0 0 5px rgba(142,117,255,.85)); }
+.payi-sparkle.tint-cyan { background: radial-gradient(circle, #c7f0ff 0%, rgba(199,240,255,0) 70%); filter: drop-shadow(0 0 5px rgba(125,211,252,.85)); }
+.payi-sparkle.tint-pink { background: radial-gradient(circle, #ffd6f5 0%, rgba(255,214,245,0) 70%); filter: drop-shadow(0 0 5px rgba(244,171,236,.85)); }
