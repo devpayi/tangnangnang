@@ -44,13 +44,14 @@ async function loadClaims() {
 }
 
 // ---- cache สำหรับ view ที่หนัก (ต้องอ่าน raw_orders_* ทั้งหมด) — monthly/sku/by-product/summary ----
-// mutation ใดๆ (DELETE import, map-product, backfill, update-claim) ต้อง clear cache นี้ทันที
-// กันข้อมูลค้าง เพราะ view เหล่านี้ยังอ้างอิง claims sheet ที่เพิ่งแก้ไป
-// สั้นกว่า dashboard/products เพราะ claims-import.js เป็นคนละ serverless function แยกกัน
-// (บน Vercel แต่ละ api/*.js คือ function คนละตัว ไม่แชร์ตัวแปรในหน่วยความจำ) ตัดข้อมูลใหม่แล้ว
-// เรียก clearClaimsCache() ข้ามไฟล์ไม่ได้ — TTL สั้นไว้ก่อนเพื่อจำกัดเวลาที่ข้อมูลอาจค้าง
+// mutation ในไฟล์นี้ (DELETE import, map-product, backfill, update-claim, create-claim(-bulk)) เรียก
+// clearClaimsCache() ทันทีอยู่แล้ว กันข้อมูลค้างหลังแก้ในหน้าเดียวกัน — เพิ่ม TTL เป็น 6 ชม. ได้อย่างปลอดภัย
+// (เหมือน planner-sales.js's CACHE_MS) เพราะข้อมูลเคลมสะสมไม่เปลี่ยนเร็ว ตัดโหลดหน้า Claims/Overview
+// ที่ต้องสแกน raw_orders_* ทั้งหมดซ้ำๆ ทุก 3 นาทีลง — claims-import.js เป็นคนละ serverless function
+// แยกกัน (ไม่แชร์ตัวแปรในหน่วยความจำ) เรียก clearClaimsCache() ข้ามไฟล์ไม่ได้ แต่ import ใหม่ไม่บ่อย
+// เท่า mutation ในไฟล์นี้ ยอมรับได้ที่ข้อมูลหลัง import อาจค้างได้นานสุด 6 ชม. ก่อน cache หมดอายุเอง
 const claimsViewCache = new Map()
-const CLAIMS_CACHE_MS = 180000
+const CLAIMS_CACHE_MS = 6 * 60 * 60 * 1000
 const clearClaimsCache = () => claimsViewCache.clear()
 
 import { requireAuth } from './_lib/auth.js'
