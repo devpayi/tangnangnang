@@ -1,8 +1,21 @@
 import { useState } from 'react'
 import { Gem, Lock, User } from 'lucide-react'
 
-// สไตล์อ้างอิง: การ์ดมืดลอยบนพื้นหลังดาว/หมอกม่วงชมพู ปุ่ม gradient ชมพูเต็มความกว้าง
-// รีแบรนด์เป็น PAYI Floor / ของแตง — ตัดช่อง Username ออก ระบบนี้ใช้รหัสผ่านเดียวไม่มี username
+// สไตล์อ้างอิง: การ์ดมืดลอยบนพื้นหลังดาว/หมอกน้ำเงินฟ้าเรืองแสง มีเพชรเรืองแสงขนาบซ้าย-ขวา
+// (คอนเซปต์จากไอเดียแท่งไฟเรืองแสง — ใช้ไอคอนเพชรของแอพเองแทน ไม่ใช้โลโก้/ข้อความแบรนด์อื่น)
+function GlowGem({ side }) {
+  return (
+    <div style={{
+      position: 'absolute', top: '50%', [side]: '4%', transform: 'translateY(-50%)',
+      width: 120, height: 120, display: 'flex', alignItems: 'center', justifyContent: 'center',
+      opacity: 0.85, filter: 'drop-shadow(0 0 24px rgba(125,211,252,.85)) drop-shadow(0 0 50px rgba(96,165,250,.5))',
+      zIndex: 0, pointerEvents: 'none',
+    }}>
+      <Gem size={90} color="#e0f2fe" strokeWidth={1.4} />
+    </div>
+  )
+}
+
 function Stars() {
   const dots = Array.from({ length: 40 }, (_, i) => {
     const x = (i * 53.7) % 100
@@ -38,17 +51,19 @@ export default function Login({ onSuccess }) {
     <div style={{
       minHeight: '100vh', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24,
       background: `
-        radial-gradient(circle at 20% 15%, rgba(244,171,236,.28), transparent 45%),
-        radial-gradient(circle at 85% 20%, rgba(142,117,255,.30), transparent 45%),
-        radial-gradient(circle at 50% 90%, rgba(96,165,250,.16), transparent 50%),
-        linear-gradient(160deg, #2c2440 0%, #241b38 45%, #1c1730 100%)
+        radial-gradient(circle at 50% 45%, rgba(125,211,252,.30), transparent 55%),
+        radial-gradient(circle at 15% 20%, rgba(96,165,250,.22), transparent 45%),
+        radial-gradient(circle at 85% 80%, rgba(56,189,248,.18), transparent 50%),
+        linear-gradient(160deg, #0b1f3a 0%, #0e2a4a 45%, #081727 100%)
       `,
       fontFamily: "'Segoe UI', Inter, system-ui, sans-serif",
     }}>
       <Stars />
+      <GlowGem side="left" />
+      <GlowGem side="right" />
 
       <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, marginBottom: 26 }}>
-        <div style={{ width: 58, height: 58, borderRadius: 18, background: 'linear-gradient(135deg, #f472d0, #8E75FF)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 24px rgba(212,86,196,.35)' }}>
+        <div style={{ width: 58, height: 58, borderRadius: 18, background: 'linear-gradient(135deg, #7dd3fc, #2563eb)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 24px rgba(37,99,235,.4)' }}>
           <Gem size={26} color="#fff" strokeWidth={2.2} />
         </div>
         <div style={{ fontSize: 20, fontWeight: 800, color: '#fff' }}>PAYI Floor</div>
@@ -58,7 +73,7 @@ export default function Login({ onSuccess }) {
       <form onSubmit={submit} style={{
         position: 'relative', zIndex: 1, width: '100%', maxWidth: 360,
         background: 'rgba(20,18,32,.72)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-        border: '1px solid rgba(255,255,255,.08)', borderTop: '2px solid #6EE7B7', borderRadius: 20, padding: 26,
+        border: '1px solid rgba(255,255,255,.08)', borderTop: '2px solid #7dd3fc', borderRadius: 20, padding: 26,
         boxShadow: '0 24px 60px rgba(0,0,0,.35)',
       }}>
         <h3 style={{ margin: '0 0 18px', fontSize: 15, fontWeight: 700, color: '#fff' }}>เข้าสู่ระบบ</h3>
@@ -93,8 +108,8 @@ export default function Login({ onSuccess }) {
           type="submit" disabled={loading || !password}
           style={{
             marginTop: 20, width: '100%', border: 'none', borderRadius: 999, padding: '12px 0', fontSize: 14, fontWeight: 700, cursor: loading ? 'default' : 'pointer',
-            background: 'linear-gradient(135deg, #f472d0, #db2ea6)', color: '#fff',
-            boxShadow: '0 10px 24px rgba(219,46,166,.35)',
+            background: 'linear-gradient(135deg, #38bdf8, #2563eb)', color: '#fff',
+            boxShadow: '0 10px 24px rgba(37,99,235,.4)',
             opacity: loading || !password ? 0.7 : 1,
           }}
         >
