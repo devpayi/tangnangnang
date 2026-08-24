@@ -49,7 +49,7 @@ export default function Login({ onSuccess }) {
 
   return (
     <div style={{
-      minHeight: '100vh', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24,
+      height: '100vh', boxSizing: 'border-box', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 24,
       background: `
         radial-gradient(circle at 50% 45%, rgba(125,211,252,.30), transparent 55%),
         radial-gradient(circle at 15% 20%, rgba(96,165,250,.22), transparent 45%),
