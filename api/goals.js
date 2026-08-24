@@ -61,7 +61,9 @@ async function plannerActuals(monthPrefix) {
   return { fulfillmentPct, stockoutDays: stockoutDates.size, totalFeedDays: total }
 }
 
+import { requireAuth } from './_lib/auth.js'
 export default async function handler(req, res) {
+  if (!requireAuth(req, res)) return
   try {
     if (req.method === 'POST') {
       const b = req.body || {}

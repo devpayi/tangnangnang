@@ -17,7 +17,9 @@ export const EVENT_TYPES = [
 ]
 const TYPE_KEYS = EVENT_TYPES.map((t) => t.key)
 
+import { requireAuth } from './_lib/auth.js'
 export default async function handler(req, res) {
+  if (!requireAuth(req, res)) return
   try {
     if (req.method === 'GET') {
       await ensureSheet(SHEET, HEADERS)

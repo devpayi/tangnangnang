@@ -53,7 +53,9 @@ const claimsViewCache = new Map()
 const CLAIMS_CACHE_MS = 180000
 const clearClaimsCache = () => claimsViewCache.clear()
 
+import { requireAuth } from './_lib/auth.js'
 export default async function handler(req, res) {
+  if (!requireAuth(req, res)) return
   const view = req.query.view || 'summary'
 
   try {

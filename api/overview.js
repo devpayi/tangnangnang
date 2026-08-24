@@ -67,7 +67,9 @@ async function getRedAlertsCached(today, claims) {
   return p
 }
 
+import { requireAuth } from './_lib/auth.js'
 export default async function handler(req, res) {
+  if (!requireAuth(req, res)) return
   if (req.method !== 'GET') return res.status(405).json({ success: false, error: 'Method not allowed' })
   try {
     const today = new Date().toISOString().slice(0, 10)

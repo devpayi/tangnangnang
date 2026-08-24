@@ -8,7 +8,9 @@ const PLANNER_DAILY_SHEET = 'planner_daily'
 const PLANNER_CONFIG_HEADERS = ['master_sku', 'enabled', 'reserve_days', 'safety_percent', 'updated_at', 'updated_by']
 const PLANNER_DAILY_HEADERS = ['id', 'date', 'master_sku', 'fg', 'sales_average', 'demand_mode', 'recommended_feed', 'planned_feed', 'feeders', 'updated_at', 'updated_by']
 
+import { requireAuth } from './_lib/auth.js'
 export default async function handler(req, res) {
+  if (!requireAuth(req, res)) return
   const text = (value) => String(value ?? '').trim()
   const number = (value) => Math.max(0, Number(value) || 0)
   const truthy = (value) => value === true || value === 1 || ['1', 'true', 'yes'].includes(String(value).toLowerCase())

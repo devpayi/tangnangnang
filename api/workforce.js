@@ -1,6 +1,7 @@
 // /api/workforce — Manpower & OT calendar/planning, ported from mona-ops api/sheet-tools.js (opWorkforce).
-// payi-floor has no auth system yet (single user, แตง) — all requireAuth/requireAdmin/requireScheduleEditor
-// guards from the mona-ops original are stripped, same precedent as claims.js/planner.js in this project.
+// payi-floor uses a single shared-password gate (api/_lib/auth.js requireAuth), not mona-ops's per-user
+// roles — the requireAdmin/requireScheduleEditor role checks from the mona-ops original are stripped
+// entirely (single user, แตง), only the top-level requireAuth guard remains.
 //
 // GET                       -> full workforce data (rows/manpower/events/people/holidays/otLimits/...)
 // GET ?sourceOnly=1         -> just sourceManpower (calendar presence), used by the frontend preview mode
@@ -19,7 +20,9 @@ import {
 } from './_lib/workforce.js'
 import { leaveAbsenceDates } from './_lib/leaveCoverage.js'
 
+import { requireAuth } from './_lib/auth.js'
 export default async function handler(req, res) {
+  if (!requireAuth(req, res)) return
   try {
     return await workforceInner(req, res)
   } catch (e) {

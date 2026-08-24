@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { LayoutDashboard, ClipboardList, TrendingUp, Target, Users, BookOpen, ClipboardPlus, CalendarClock, Gem } from 'lucide-react'
 import Overview from './pages/Overview.jsx'
 import ClaimsFull from './pages/ClaimsFull.jsx'
@@ -9,6 +9,7 @@ import FloorPeople from './pages/FloorPeople.jsx'
 import Sop from './pages/Sop.jsx'
 import EventLog from './pages/EventLog.jsx'
 import WorkforceOT from './pages/WorkforceOT.jsx'
+import Login from './pages/Login.jsx'
 import Sparkles from './Sparkles.jsx'
 import capybaraMascot from './assets/capybara-mascot.png'
 
@@ -29,6 +30,19 @@ const PLANNER_SUBTABS = [['planner', 'แพลนฟีด'], ['feed', 'สิ�
 export default function App() {
   const [tab, setTab] = useState('overview')
   const [plannerSub, setPlannerSub] = useState('planner')
+  const [authStatus, setAuthStatus] = useState({ checked: false, enabled: false })
+  const [loggedIn, setLoggedIn] = useState(() => Boolean(localStorage.getItem('payi-floor-token')))
+
+  useEffect(() => {
+    fetch('/api/auth?action=status')
+      .then((r) => r.json())
+      .then((d) => setAuthStatus({ checked: true, enabled: Boolean(d.enabled) }))
+      .catch(() => setAuthStatus({ checked: true, enabled: false }))
+  }, [])
+
+  if (!authStatus.checked) return null
+  if (authStatus.enabled && !loggedIn) return <Login onSuccess={() => setLoggedIn(true)} />
+
   return (
     <div style={{
       display: 'flex', height: '100vh', overflow: 'hidden', fontFamily: "'Segoe UI', Inter, system-ui, sans-serif",
@@ -87,6 +101,14 @@ export default function App() {
         <div style={{ flexShrink: 0, textAlign: 'center', padding: '0 10px 6px', position: 'relative', zIndex: 1 }}>
           <div style={{ fontSize: 11.5, fontWeight: 700, color: '#334155' }}>สู้ๆ นะวันนี้</div>
           <div style={{ fontSize: 10.5, fontWeight: 500, color: '#6C6C80', marginTop: 1 }}>คาปิบาร่าเป็นกำลังใจให้</div>
+          {authStatus.enabled && (
+            <button
+              onClick={() => { localStorage.removeItem('payi-floor-token'); setLoggedIn(false) }}
+              style={{ marginTop: 8, background: 'transparent', border: 'none', color: '#6C6C80', fontSize: 10.5, fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
+            >
+              ออกจากระบบ
+            </button>
+          )}
         </div>
       </aside>
       <main style={{ flex: 1, minWidth: 0, height: '100%', overflowY: 'auto', background: '#F8F3FC' }}>

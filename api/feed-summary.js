@@ -6,7 +6,9 @@ import { getSkuRedirectMap, getSetRecipeKeySet, resolveSalesSku } from './_lib/s
 const cache = new Map()
 const CACHE_MS = 180000
 
+import { requireAuth } from './_lib/auth.js'
 export default async function handler(req, res) {
+  if (!requireAuth(req, res)) return
   if (req.method !== 'GET') return res.status(405).json({ success: false, error: 'Method not allowed' })
 
   const { startDate = '', endDate = '' } = req.query

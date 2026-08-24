@@ -142,7 +142,9 @@ export async function computeSalesStats(days, { fresh = false } = {}) {
   return data
 }
 
+import { requireAuth } from './_lib/auth.js'
 export default async function handler(req, res) {
+  if (!requireAuth(req, res)) return
   if (req.method !== 'GET') return res.status(405).json({ success: false, error: 'Method not allowed' })
   const days = Math.min(180, Math.max(7, parseInt(req.query.days, 10) || 90))
   try {

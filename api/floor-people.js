@@ -18,7 +18,9 @@ async function loadAll() {
 
 const toRow = (r) => HEADERS.map((h) => (h === 'phone' ? forceText(r[h]) : (r[h] ?? '')))
 
+import { requireAuth } from './_lib/auth.js'
 export default async function handler(req, res) {
+  if (!requireAuth(req, res)) return
   try {
     if (req.method === 'GET') {
       const [personMap, floorRows] = await Promise.all([getPersonMap().catch(() => ({})), loadAll()])

@@ -20,7 +20,9 @@ async function loadDay(date) {
   return rows.find((r) => r.date === date) || { date }
 }
 
+import { requireAuth } from './_lib/auth.js'
 export default async function handler(req, res) {
+  if (!requireAuth(req, res)) return
   try {
     if (req.method === 'GET') {
       const date = String(req.query.date || new Date().toISOString().slice(0, 10))
