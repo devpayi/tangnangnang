@@ -260,12 +260,32 @@ function MoMBadge({ mom, lowerIsBetter = true }) {
   )
 }
 
-// ไอคอนคำอธิบาย — โฮเวอร์แล้วเห็นคำอธิบายสั้นๆ ว่าตัวเลขนี้คืออะไร/คำนวณยังไง (native title tooltip เบาที่สุด ไม่ต้องพึ่ง library เพิ่ม)
+// ไอคอนคำอธิบาย — เดิมใช้ native title tooltip (ต้อง hover ค้าง ~1 วิ และแตะบนมือถือไม่ทำงานเลย)
+// เปลี่ยนเป็น click/tap toggle แทน กดที่ไอคอนเห็นทันที กดซ้ำ/กดที่อื่นเพื่อปิด
 function HintIcon({ text }) {
+  const [open, setOpen] = useState(false)
   if (!text) return null
   return (
-    <span title={text} style={{ display: 'inline-flex', cursor: 'help', flexShrink: 0, opacity: .55 }}>
-      <Info size={13} color={PEARL_LABEL} />
+    <span style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
+      <span
+        onClick={(e) => { e.stopPropagation(); setOpen((v) => !v) }}
+        style={{ display: 'inline-flex', cursor: 'pointer', opacity: .55 }}
+      >
+        <Info size={13} color={PEARL_LABEL} />
+      </span>
+      {open && (
+        <>
+          <span onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 30 }} />
+          <span style={{
+            position: 'absolute', bottom: '130%', left: '50%', transform: 'translateX(-50%)',
+            width: 200, background: 'rgba(28,28,40,.95)', color: '#fff', fontSize: 11, fontWeight: 500,
+            lineHeight: 1.4, borderRadius: 10, padding: '8px 10px', zIndex: 31, textAlign: 'left',
+            boxShadow: '0 8px 24px rgba(0,0,0,.25)', whiteSpace: 'normal',
+          }}>
+            {text}
+          </span>
+        </>
+      )}
     </span>
   )
 }
