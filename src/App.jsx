@@ -99,8 +99,8 @@ export default function App() {
               style={{
                 display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left', position: 'relative', zIndex: 1,
                 border: 'none', borderRadius: 14, padding: '10px 12px', fontSize: 13.5, fontWeight: 600, cursor: 'pointer',
-                background: active ? 'linear-gradient(135deg, #8E75FF, #6E56CF)' : 'transparent',
-                boxShadow: active ? '0 6px 16px rgba(110,86,207,.32), inset 0 1px 0 rgba(255,255,255,.35)' : 'none',
+                background: active ? 'linear-gradient(135deg, #7dd3fc, #2563eb)' : 'transparent',
+                boxShadow: active ? '0 0 16px rgba(56,189,248,.5), 0 6px 16px rgba(37,99,235,.35), inset 0 1px 0 rgba(255,255,255,.35)' : 'none',
                 color: active ? '#fff' : '#334155',
                 transition: 'background .15s ease, box-shadow .15s ease',
               }}
@@ -179,8 +179,8 @@ export default function App() {
                 <button key={t.id} onClick={() => goTab(t.id)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: 'none', border: 'none', cursor: 'pointer', padding: '4px 10px', flex: 1 }}>
                   <span style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center', width: 38, height: 30, borderRadius: 12,
-                    background: active ? 'linear-gradient(135deg, #8E75FF, #6E56CF)' : 'transparent',
-                    boxShadow: active ? '0 4px 12px rgba(110,86,207,.35)' : 'none',
+                    background: active ? 'linear-gradient(135deg, #7dd3fc, #2563eb)' : 'transparent',
+                    boxShadow: active ? '0 0 12px rgba(56,189,248,.5), 0 4px 12px rgba(37,99,235,.35)' : 'none',
                   }}>
                     <Icon size={17} color={active ? '#fff' : '#6C6C80'} />
                   </span>
@@ -217,7 +217,8 @@ export default function App() {
                     return (
                       <button key={t.id} onClick={() => goTab(t.id)} style={{
                         display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left', border: 'none', borderRadius: 14, padding: '12px 12px', cursor: 'pointer',
-                        background: active ? 'linear-gradient(135deg, #8E75FF, #6E56CF)' : '#f6f2fc', color: active ? '#fff' : '#334155', fontSize: 13, fontWeight: 700,
+                        background: active ? 'linear-gradient(135deg, #7dd3fc, #2563eb)' : '#f6f2fc', color: active ? '#fff' : '#334155', fontSize: 13, fontWeight: 700,
+                        boxShadow: active ? '0 0 12px rgba(56,189,248,.4)' : 'none',
                       }}>
                         <Icon size={16} />
                         {t.label}
