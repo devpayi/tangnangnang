@@ -43,7 +43,7 @@ const BUBBLE_HUES = {
   blue: 'rgba(186,168,255,.30)',
   white: 'rgba(255,255,255,.65)',
   pink: 'rgba(255,181,240,.34)',
-  cyan: 'rgba(216,204,255,.40)',
+  cyan: 'rgba(125,211,252,.34)',
   silver: 'rgba(226,215,245,.46)',
 }
 function Bubble({ size = 90, top, left, right, bottom, hue = 'purple' }) {
@@ -363,7 +363,7 @@ export default function Overview({ onNavigate, isMobile = false }) {
       radial-gradient(circle at 8% 12%, rgba(216,204,255,.30), transparent 38%),
       radial-gradient(circle at 92% 8%, rgba(255,181,240,.22), transparent 40%),
       radial-gradient(circle at 85% 90%, rgba(226,215,245,.28), transparent 42%),
-      radial-gradient(circle at 15% 88%, rgba(186,168,255,.20), transparent 40%),
+      radial-gradient(circle at 15% 88%, rgba(125,211,252,.16), transparent 40%),
       linear-gradient(160deg, #F6F1FF 0%, #FBF0FA 50%, #F3EEFC 100%)
     `,
     height: isMobile ? 'auto' : '100%', minHeight: '100%', boxSizing: 'border-box', padding: isMobile ? 14 : 20, overflow: isMobile ? 'visible' : 'hidden',
@@ -395,6 +395,7 @@ export default function Overview({ onNavigate, isMobile = false }) {
             <Sparkles count={10} seed={1} />
             <Bubble size={140} top={-50} right={-30} hue="white" />
             <Bubble size={70} bottom={-30} left={100} hue="pink" />
+            <Bubble size={50} top={-10} left={-10} hue="cyan" />
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, zIndex: 1, minWidth: 0 }}>
               <div style={{ width: 34, height: 34, borderRadius: 11, background: 'rgba(255,255,255,.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <Gem size={17} color="#6E56CF" strokeWidth={2.2} />

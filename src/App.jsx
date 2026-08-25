@@ -65,6 +65,7 @@ export default function App() {
         radial-gradient(circle at 8% 12%, rgba(216,204,255,.32), transparent 38%),
         radial-gradient(circle at 92% 8%, rgba(255,181,240,.24), transparent 40%),
         radial-gradient(circle at 85% 90%, rgba(226,215,245,.26), transparent 42%),
+        radial-gradient(circle at 15% 92%, rgba(125,211,252,.14), transparent 36%),
         linear-gradient(160deg, #F6F1FF 0%, #FBF0FA 50%, #F3EEFC 100%)
       `,
     }}>
