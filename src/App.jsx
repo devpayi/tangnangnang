@@ -69,11 +69,16 @@ export default function App() {
       `,
     }}>
       {!isMobile && <aside style={{ width: 220, flexShrink: 0, height: '100%', position: 'relative', overflow: 'hidden', zIndex: 0, background: 'linear-gradient(160deg, rgba(255,255,255,.85) 0%, rgba(233,222,255,.55) 55%, rgba(255,222,247,.35) 100%)', backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)', borderRight: '1px solid rgba(255,255,255,.9)', boxShadow: '1px 0 0 rgba(255,255,255,.9) inset, 4px 0 28px rgba(196,164,255,.18)', padding: '18px 12px', display: 'flex', flexDirection: 'column', gap: 4, boxSizing: 'border-box' }}>
+        <style>{`
+          @keyframes badgeShimmer { 0% { transform: translateX(-120%) rotate(20deg); } 100% { transform: translateX(220%) rotate(20deg); } }
+          .badge-shimmer { position: absolute; top: -30%; left: 0; width: 40%; height: 160%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.85), transparent); animation: badgeShimmer 2.6s ease-in-out infinite; }
+        `}</style>
         <div style={{ position: 'absolute', width: 120, height: 120, borderRadius: '50%', top: -40, right: -40, background: 'radial-gradient(circle at 32% 28%, rgba(255,181,240,.35), transparent 72%)', filter: 'blur(1px)', pointerEvents: 'none', zIndex: -1 }} />
         <Sparkles count={7} seed={0} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 8px 14px', position: 'relative', zIndex: 1 }}>
-          <div style={{ width: 34, height: 34, borderRadius: 11, background: 'linear-gradient(135deg, #8E75FF, #6E56CF)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 4px 12px rgba(110,86,207,.35), inset 0 1px 0 rgba(255,255,255,.5)' }}>
-            <Gem size={16} color="#fff" strokeWidth={2.2} />
+          <div style={{ width: 34, height: 34, borderRadius: 11, position: 'relative', overflow: 'hidden', background: 'linear-gradient(135deg, #7dd3fc, #2563eb)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 0 14px rgba(56,189,248,.6), 0 4px 12px rgba(37,99,235,.4), inset 0 1px 0 rgba(255,255,255,.5)' }}>
+            <span className="badge-shimmer" />
+            <Gem size={16} color="#fff" strokeWidth={2.2} style={{ position: 'relative', zIndex: 1 }} />
           </div>
           <div>
             <div className="chrome-text" style={{ fontSize: 16, fontWeight: 800, letterSpacing: '.2px' }}>PAYI Floor</div>
