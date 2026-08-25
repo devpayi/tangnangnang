@@ -69,7 +69,7 @@ export default function App() {
         linear-gradient(160deg, #F6F1FF 0%, #FBF0FA 50%, #F3EEFC 100%)
       `,
     }}>
-      {!isMobile && <aside style={{ width: 220, flexShrink: 0, height: '100%', position: 'relative', overflow: 'hidden', zIndex: 0, background: 'linear-gradient(160deg, rgba(255,255,255,.85) 0%, rgba(233,222,255,.55) 55%, rgba(255,222,247,.35) 100%)', backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)', borderRight: '1px solid rgba(255,255,255,.9)', boxShadow: '1px 0 0 rgba(255,255,255,.9) inset, 4px 0 28px rgba(196,164,255,.18)', padding: '18px 12px', display: 'flex', flexDirection: 'column', gap: 4, boxSizing: 'border-box' }}>
+      {!isMobile && <aside style={{ width: 220, flexShrink: 0, height: '100%', position: 'relative', overflow: 'hidden', zIndex: 0, background: 'linear-gradient(160deg, rgba(255,255,255,.94) 0%, rgba(224,242,254,.55) 32%, rgba(233,222,255,.5) 65%, rgba(255,222,247,.3) 100%)', backdropFilter: 'blur(20px) saturate(180%)', WebkitBackdropFilter: 'blur(20px) saturate(180%)', borderRight: '1px solid rgba(255,255,255,.9)', boxShadow: '1px 0 0 rgba(255,255,255,.9) inset, 4px 0 28px rgba(125,211,252,.18)', padding: '18px 12px', display: 'flex', flexDirection: 'column', gap: 4, boxSizing: 'border-box' }}>
         <style>{`
           @keyframes badgeShimmer { 0% { transform: translateX(-120%) rotate(20deg); } 100% { transform: translateX(220%) rotate(20deg); } }
           .badge-shimmer { position: absolute; top: -30%; left: 0; width: 40%; height: 160%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.85), transparent); animation: badgeShimmer 2.6s ease-in-out infinite; }
