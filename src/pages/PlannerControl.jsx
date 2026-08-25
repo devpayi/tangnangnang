@@ -147,40 +147,6 @@ export default function PlannerControl({ onNavigate }) {
     return () => { active = false }
   }, [salesSnapshot?.productMapping?.length])
   useEffect(() => {
-    // รายชื่ออาจโหลดจาก Product Mapping ได้ แม้ planner-sales ล้มเหลว/ติด quota
-    // ถ้ายังไม่มียอด ให้ใช้ข้อมูลที่ Dashboard Import มีอยู่แล้วและรวมตาม Master SKU (PY...)
-    const mappedSkus = new Set((salesSnapshot?.productMapping || []).map((item) => String(item.masterSku || '').toUpperCase()))
-    const hasMappedSales = (salesSnapshot?.items || []).some((item) => mappedSkus.has(String(item.masterSku || '').toUpperCase()))
-    if (mappedSkus.size && hasMappedSales) return
-    let active = true
-    fetch('/api/sheet-tools?op=summary')
-      .then((response) => response.json())
-      .then((data) => {
-        if (!active || !Array.isArray(data?.skus)) return
-        const dates = (data.daily || []).map((row) => String(row.date || '').slice(0, 10)).filter(Boolean).sort()
-        const start = dates[0] || ''
-        const anchor = dates[dates.length - 1] || ''
-        const days = start && anchor ? Math.max(1, Math.round((new Date(`${anchor}T00:00:00Z`) - new Date(`${start}T00:00:00Z`)) / 86400000) + 1) : 90
-        const bySku = new Map()
-        for (const row of data.skus) {
-          const masterSku = String(row.sku || '').trim().toUpperCase()
-          if (!/^PY/.test(masterSku)) continue
-          let item = bySku.get(masterSku)
-          if (!item) bySku.set(masterSku, (item = { key: masterSku, masterSku, name: row.name || masterSku, units90: 0, lastDate: anchor }))
-          item.units90 += Number(row.grossQty ?? row.qty ?? 0)
-        }
-        const items = [...bySku.values()].map((item) => ({ ...item, dailyAverage: item.units90 / days }))
-        if (!items.length) return
-        setSalesSnapshot((current) => {
-          const next = { ...(current || {}), success: true, items, start, anchor, days, source: 'dashboard-import', fetchedAt: new Date().toISOString() }
-          localStorage.setItem(SALES_CACHE_KEY, JSON.stringify(next))
-          return next
-        })
-      })
-      .catch(() => {})
-    return () => { active = false }
-  }, [salesSnapshot?.items?.length, salesSnapshot?.productMapping?.length])
-  useEffect(() => {
     const mapping = salesSnapshot?.productMapping || []
     if (!mapping.length) return
     setProducts((current) => {
@@ -217,7 +183,7 @@ export default function PlannerControl({ onNavigate }) {
     const fetchedAt = Number(manpowerSnapshot?.fetchedAt || 0)
     if (fetchedAt && Date.now() - fetchedAt < MANPOWER_REFRESH_MS) return undefined
     let active = true
-    fetch('/api/sheet-tools?op=workforce&sourceOnly=1')
+    fetch('/api/workforce?sourceOnly=1')
       .then((response) => response.json())
       .then((data) => {
         if (!active || !data?.success) return
