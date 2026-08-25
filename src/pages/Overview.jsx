@@ -76,14 +76,14 @@ function Shine() {
   )
 }
 
-function QuickLink({ label, icon: Icon, onClick, active = false }) {
+function QuickLink({ label, icon: Icon, onClick, active = false, fill = false }) {
   const t = TINTS.blue
   return (
     <button
       onClick={onClick}
       style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8,
-        width: 1, flexGrow: 1, height: 92, flexShrink: 0, cursor: 'pointer', textAlign: 'center',
+        ...(fill ? { width: '100%' } : { width: 1, flexGrow: 1 }), height: 92, flexShrink: 0, cursor: 'pointer', textAlign: 'center',
         background: 'linear-gradient(160deg, #ffffff 0%, #ffffff 55%, #f7f1fc 100%)', borderRadius: 16,
         border: active ? `1.5px solid ${t.ring}` : '1px solid #d5c2f2',
         boxShadow: '0 6px 16px rgba(110,86,207,.16), 0 1px 0 rgba(255,255,255,.9) inset',
@@ -333,7 +333,7 @@ function NumberCard({ label, hint, actual, target, unit = '', mom, lowerIsBetter
   )
 }
 
-export default function Overview({ onNavigate }) {
+export default function Overview({ onNavigate, isMobile = false }) {
   const [data, setData] = useState(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
@@ -366,8 +366,8 @@ export default function Overview({ onNavigate }) {
       radial-gradient(circle at 15% 88%, rgba(186,168,255,.20), transparent 40%),
       linear-gradient(160deg, #F6F1FF 0%, #FBF0FA 50%, #F3EEFC 100%)
     `,
-    height: '100%', boxSizing: 'border-box', padding: 20, overflow: 'hidden',
-    display: 'grid', gridTemplateRows: 'minmax(0, 1fr)', gap: 14,
+    height: isMobile ? 'auto' : '100%', minHeight: '100%', boxSizing: 'border-box', padding: isMobile ? 14 : 20, overflow: isMobile ? 'visible' : 'hidden',
+    display: 'grid', gridTemplateRows: isMobile ? 'auto' : 'minmax(0, 1fr)', gap: isMobile ? 12 : 14,
   }
   const rowStyle = (i) => ({ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', alignItems: 'center', columnGap: 14, fontSize: 13, padding: '3px 10px', borderRadius: 9, background: i % 2 === 0 ? 'rgba(255,255,255,.4)' : 'transparent' })
 
@@ -390,8 +390,8 @@ export default function Overview({ onNavigate }) {
         .thin-scroll::-webkit-scrollbar-thumb:hover { background: rgba(110,86,207,.4); }
         .thin-scroll { scrollbar-width: thin; scrollbar-color: rgba(110,86,207,.25) transparent; }
       `}</style>
-      <div style={{ display: 'grid', gridTemplateRows: 'auto auto auto minmax(0, 1fr)', gap: 14, minHeight: 0, height: '100%' }}>
-          <div style={{ flexShrink: 0, position: 'relative', overflow: 'hidden', background: 'linear-gradient(120deg, #3d2f66 0%, #8E75FF 38%, #d9a9f0 68%, #f4c9ef 100%)', borderRadius: 20, padding: '13px 20px', color: '#fff', boxShadow: '0 10px 30px rgba(160,110,220,.30), inset 0 1px 0 rgba(255,255,255,.3)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14 }}>
+      <div style={{ display: 'grid', gridTemplateRows: isMobile ? 'auto' : 'auto auto auto minmax(0, 1fr)', gap: isMobile ? 12 : 14, minHeight: 0, height: isMobile ? 'auto' : '100%' }}>
+          <div style={{ flexShrink: 0, position: 'relative', overflow: 'hidden', background: 'linear-gradient(120deg, #3d2f66 0%, #8E75FF 38%, #d9a9f0 68%, #f4c9ef 100%)', borderRadius: 20, padding: isMobile ? '13px 16px' : '13px 20px', color: '#fff', boxShadow: '0 10px 30px rgba(160,110,220,.30), inset 0 1px 0 rgba(255,255,255,.3)', display: 'flex', flexWrap: isMobile ? 'wrap' : 'nowrap', alignItems: 'center', justifyContent: 'space-between', gap: isMobile ? 8 : 14 }}>
             <Sparkles count={10} seed={1} />
             <Bubble size={140} top={-50} right={-30} hue="white" />
             <Bubble size={70} bottom={-30} left={100} hue="pink" />
@@ -417,7 +417,7 @@ export default function Overview({ onNavigate }) {
               <h3 style={{ fontSize: 13.5, fontWeight: 600, margin: 0, color: '#1C1C28' }}>📊 Performance</h3>
               <button onClick={() => onNavigate?.('goals')} style={{ background: 'transparent', border: 'none', color: '#6E56CF', fontSize: 11.5, fontWeight: 600, cursor: 'pointer', padding: 0 }}>ตั้งเป้า →</button>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: isMobile ? 10 : 14 }}>
               <RingCard label="อัตราเคลม" hint="% ของออเดอร์ที่ถูกเคลม เทียบกับจำนวนชิ้นที่ขายได้เดือนนี้ ยิ่งน้อยยิ่งดี" actual={p.claimRate.actual} target={p.claimRate.target} mom={p.claimRate.mom} seed={11} />
               <NumberCard label="มูลค่าเสียหาย" hint="มูลค่ารวมของเคลมทั้งหมดที่เกิดขึ้นเดือนนี้ (บาท) ยิ่งน้อยยิ่งดี" actual={p.claimValue.actual} target={p.claimValue.target} mom={p.claimValue.mom} unit=" ฿" seed={12} />
               <RingCard label="Feed Fulfillment" hint="% ของวันที่ฟีดของครบตามจำนวนที่ระบบแนะนำ เดือนนี้ ยิ่งมากยิ่งดี" actual={p.feedFulfillment.actual} target={p.feedFulfillment.target} mom={p.feedFulfillment.mom} lowerIsBetter={false} seed={13} />
@@ -425,12 +425,12 @@ export default function Overview({ onNavigate }) {
             </div>
           </div>
 
-          <div style={{ ...glass, flexShrink: 0, padding: '8px 10px', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ ...glass, flexShrink: 0, padding: isMobile ? '10px' : '8px 10px', display: isMobile ? 'grid' : 'flex', gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : undefined, alignItems: 'center', gap: 10 }}>
             <Shine /><CardBubbles variant={0} /><Sparkles count={5} seed={2} />
-            {QUICK_LINKS.map((q) => <QuickLink key={q.id} label={q.label} icon={q.icon} onClick={() => onNavigate?.(q.id)} />)}
+            {QUICK_LINKS.map((q) => <QuickLink key={q.id} label={q.label} icon={q.icon} onClick={() => onNavigate?.(q.id)} fill={isMobile} />)}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, minHeight: 0 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 12 : 14, minHeight: 0 }}>
             {/* ---- ต้องจัดการด่วน (ย้ายมาซ้าย ให้เห็นก่อน) ---- */}
             <div style={{ ...glass, padding: '14px 16px', minHeight: 0, display: 'flex', flexDirection: 'column' }}>
               <Shine /><CardBubbles variant={1} /><Sparkles count={5} seed={3} />
