@@ -391,7 +391,7 @@ export default function Overview({ onNavigate, isMobile = false }) {
         .thin-scroll { scrollbar-width: thin; scrollbar-color: rgba(110,86,207,.25) transparent; }
       `}</style>
       <div style={{ display: 'grid', gridTemplateRows: isMobile ? 'auto' : 'auto auto auto minmax(0, 1fr)', gap: isMobile ? 12 : 14, minHeight: 0, height: isMobile ? 'auto' : '100%' }}>
-          <div style={{ flexShrink: 0, position: 'relative', overflow: 'hidden', background: 'linear-gradient(120deg, #3d2f66 0%, #8E75FF 38%, #d9a9f0 68%, #f4c9ef 100%)', borderRadius: 20, padding: isMobile ? '13px 16px' : '13px 20px', color: '#fff', boxShadow: '0 10px 30px rgba(160,110,220,.30), inset 0 1px 0 rgba(255,255,255,.3)', display: 'flex', flexWrap: isMobile ? 'wrap' : 'nowrap', alignItems: 'center', justifyContent: 'space-between', gap: isMobile ? 8 : 14 }}>
+          <div style={{ flexShrink: 0, position: 'relative', overflow: 'hidden', background: 'linear-gradient(120deg, #1e3a6e 0%, #2563eb 20%, #8E75FF 52%, #d9a9f0 76%, #f4c9ef 100%)', borderRadius: 20, padding: isMobile ? '13px 16px' : '13px 20px', color: '#fff', boxShadow: '0 10px 30px rgba(110,150,230,.30), inset 0 1px 0 rgba(255,255,255,.3)', display: 'flex', flexWrap: isMobile ? 'wrap' : 'nowrap', alignItems: 'center', justifyContent: 'space-between', gap: isMobile ? 8 : 14 }}>
             <Sparkles count={10} seed={1} />
             <Bubble size={140} top={-50} right={-30} hue="white" />
             <Bubble size={70} bottom={-30} left={100} hue="pink" />
