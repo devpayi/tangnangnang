@@ -5,5 +5,4 @@ export const CLAIMS_HEADERS = [
   'date', 'business', 'product_name', 'free_item', 'claim_value',
   'is_damaged', 'is_incomplete', 'is_wrong_item', 'note',
   'master_sku', 'display_name', 'imported_at', 'import_id', 'source_file', 'id',
-  'qty', // จำนวนชิ้นที่เสียในเคสนี้ (default 1) — ต่อท้ายสุด อย่าแทรกกลาง แถวเก่าไม่มีคอลัมน์นี้จะว่าง ถือเป็น 1 ชิ้น
 ]
