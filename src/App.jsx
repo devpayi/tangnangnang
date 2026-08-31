@@ -98,10 +98,10 @@ export default function App() {
               onClick={() => setTab(t.id)}
               style={{
                 display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left', position: 'relative', zIndex: 1,
-                border: 'none', borderRadius: 14, padding: '10px 12px', fontSize: 13.5, fontWeight: 600, cursor: 'pointer',
-                background: active ? 'linear-gradient(135deg, #7dd3fc, #2563eb)' : 'transparent',
-                boxShadow: active ? '0 0 16px rgba(56,189,248,.5), 0 6px 16px rgba(37,99,235,.35), inset 0 1px 0 rgba(255,255,255,.35)' : 'none',
-                color: active ? '#fff' : '#334155',
+                border: active ? '1px solid rgba(112,140,255,.35)' : '1px solid transparent', borderRadius: 14, padding: '10px 12px', fontSize: 13.5, fontWeight: 600, cursor: 'pointer',
+                background: active ? 'rgba(112,140,255,.22)' : 'transparent',
+                boxShadow: active ? '0 4px 14px rgba(90,110,220,.14), inset 0 1px 0 rgba(255,255,255,.5)' : 'none',
+                color: active ? '#4A4A6A' : '#334155',
                 transition: 'background .15s ease, box-shadow .15s ease',
               }}
             >
