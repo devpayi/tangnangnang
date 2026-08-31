@@ -14,6 +14,8 @@ const isCancelled = (s = '') => String(s).includes('ยกเลิก') || Stri
 const isReturned = (s = '') => String(s).toLowerCase().includes('return')
 // เคลมบางแถวไม่ได้ติ๊กประเภทไหนเลย (เสีย/ส่งไม่ครบ/ส่งผิด) — ถ้าไม่นับแยกไว้ ยอดรวม 3 ประเภทจะน้อยกว่ายอดเคลมทั้งหมดโดยไม่มีอะไรเตือน
 const noneFlagged = (r) => !truthy(r.is_damaged) && !truthy(r.is_incomplete) && !truthy(r.is_wrong_item)
+// จำนวนชิ้นที่เสียในเคสนี้ (แถวเก่า/ไม่ได้กรอก = 1 ชิ้น) — ใช้แค่โชว์ "รวมกี่ชิ้น" เสริม ไม่กระทบการนับ "จำนวนเคส" ที่นับจากแถวเหมือนเดิม
+const qtyOf = (r) => Math.max(1, parseInt(r.qty, 10) || 1)
 // เคลมบางแถวมีแต่ product_name (display_name/master_sku ว่าง) — ไม่ fallback จะรวมเป็น "(ไม่ระบุ)" กลุ่มเดียวทั้งที่เป็นคนละสินค้า
 const claimGroup = (r, overrideMap, redirectMap) => deriveGroup(r.display_name || r.product_name, resolveRedirect(r.master_sku, redirectMap) || r.master_sku, overrideMap)
 
@@ -152,6 +154,7 @@ export default async function handler(req, res) {
         note: b.note ?? current[idx].note,
         free_item: b.free_item ?? current[idx].free_item,
         claim_value: b.claim_value !== undefined ? String(num(b.claim_value)) : current[idx].claim_value,
+        qty: b.qty !== undefined ? String(Math.max(1, parseInt(b.qty, 10) || 1)) : current[idx].qty,
       }
       const next = current.map((r, i) => (i === idx ? updated : r))
       await overwriteSheet('claims', CLAIMS_HEADERS, next.map((r) => CLAIMS_HEADERS.map((h) => r[h] ?? '')))
@@ -176,6 +179,7 @@ export default async function handler(req, res) {
         is_damaged: b.is_damaged ? '1' : '', is_incomplete: b.is_incomplete ? '1' : '', is_wrong_item: b.is_wrong_item ? '1' : '',
         note: String(b.note || '').trim(), master_sku: masterSku, display_name: displayName,
         imported_at: new Date().toISOString(), import_id: '', source_file: 'กรอกเองจากหน้าเว็บ',
+        qty: String(Math.max(1, parseInt(b.qty, 10) || 1)),
       }
     }
 
@@ -308,7 +312,7 @@ export default async function handler(req, res) {
         totalCount: matched.length,
         records: sorted.slice(0, limit).map((r) => ({
           id: r.id, date: r.date, business: r.business, master_sku: r.master_sku, display_name: r.display_name, product_name: r.product_name,
-          claim_value: num(r.claim_value),
+          claim_value: num(r.claim_value), qty: qtyOf(r),
           is_damaged: truthy(r.is_damaged), is_incomplete: truthy(r.is_incomplete), is_wrong_item: truthy(r.is_wrong_item),
           note: r.note, free_item: r.free_item, imported_at: r.imported_at,
         })),
@@ -332,9 +336,11 @@ export default async function handler(req, res) {
       const bizMap = new Map()
       const reason = { damaged: { count: 0, value: 0 }, incomplete: { count: 0, value: 0 }, wrong: { count: 0, value: 0 }, unspecified: { count: 0, value: 0 } }
       let totalValue = 0
+      let totalQty = 0
       const monthlyMap = new Map()
       for (const r of recs) {
         const val = num(r.claim_value); totalValue += val
+        totalQty += qtyOf(r)
         const b = r.business || '(ไม่ระบุ)'
         if (!bizMap.has(b)) bizMap.set(b, { business: b, count: 0, value: 0 })
         const x = bizMap.get(b); x.count++; x.value += val
@@ -349,12 +355,13 @@ export default async function handler(req, res) {
         success: true,
         totalCount: recs.length,
         totalValue: round2(totalValue),
+        totalQty, // รวมจำนวนชิ้น (คนละตัวกับ totalCount ที่นับ "จำนวนเคส" — 1 เคสอาจมีหลายชิ้น)
         byBusiness: [...bizMap.values()].map((x) => ({ ...x, value: round2(x.value) })).sort((a, b) => b.count - a.count),
         reasonSummary: reason,
         monthlyTrend: [...monthlyMap.values()].map(m => ({ ...m, value: round2(m.value) })).sort((a, b) => a.month.localeCompare(b.month)),
         records: recs.map((r) => ({
           id: r.id, date: r.date, business: r.business, master_sku: r.master_sku, display_name: r.display_name, product_name: r.product_name,
-          claim_value: num(r.claim_value),
+          claim_value: num(r.claim_value), qty: qtyOf(r),
           is_damaged: truthy(r.is_damaged), is_incomplete: truthy(r.is_incomplete), is_wrong_item: truthy(r.is_wrong_item),
           note: r.note, free_item: r.free_item,
         })),
@@ -368,12 +375,13 @@ export default async function handler(req, res) {
       const redirectMapSku = await getSkuRedirectMap()
 
       const recs = rows.filter((r) => inDate(r.date) && keepBiz(r.business))
-      const groupMap = new Map() // key -> { key, label, count, value, damaged, incomplete, wrong, unspecified, skus:Set }
+      const groupMap = new Map() // key -> { key, label, count, qty, value, damaged, incomplete, wrong, unspecified, skus:Set }
       for (const r of recs) {
         const { key, label } = claimGroup(r, overrideMap, redirectMapSku)
         let g = groupMap.get(key)
-        if (!g) groupMap.set(key, (g = { key, label, count: 0, value: 0, damaged: 0, incomplete: 0, wrong: 0, unspecified: 0, skus: new Set() }))
-        g.count++
+        if (!g) groupMap.set(key, (g = { key, label, count: 0, qty: 0, value: 0, damaged: 0, incomplete: 0, wrong: 0, unspecified: 0, skus: new Set() }))
+        g.count++ // จำนวนเคส (แถว) — คนละตัวกับ qty ที่รวมจำนวนชิ้นจริง
+        g.qty += qtyOf(r)
         g.value += num(r.claim_value)
         if (truthy(r.is_damaged)) g.damaged++
         if (truthy(r.is_incomplete)) g.incomplete++

@@ -312,7 +312,7 @@ function SkuDetailPanel({ masterSku, productKey, displayName, skuCount, startDat
     return () => { clearTimeout(timer); controller.abort() }
   }, [masterSku, productKey, startDate, endDate, business])
 
-  const startEdit = (rec) => { setEditingId(rec.id); setEditDraft({ is_damaged: rec.is_damaged, is_incomplete: rec.is_incomplete, is_wrong_item: rec.is_wrong_item, note: rec.note || '', free_item: rec.free_item || '', claim_value: rec.claim_value || '' }) }
+  const startEdit = (rec) => { setEditingId(rec.id); setEditDraft({ is_damaged: rec.is_damaged, is_incomplete: rec.is_incomplete, is_wrong_item: rec.is_wrong_item, note: rec.note || '', free_item: rec.free_item || '', claim_value: rec.claim_value || '', qty: rec.qty || 1 }) }
   const cancelEdit = () => { setEditingId(''); setEditDraft({}) }
   const saveEdit = async (id) => {
     setSaving(true)
@@ -417,7 +417,7 @@ function SkuDetailPanel({ masterSku, productKey, displayName, skuCount, startDat
               {detail.records?.length > 0 && (
                 <div>
                   <div style={{ fontSize: 12, fontWeight: 700, color: '#4a4460', marginBottom: 10 }}>
-                    รายการเคลมทั้งหมด ({fmtC(detail.records.length)} รายการ)
+                    รายการเคลมทั้งหมด ({fmtC(detail.records.length)} เคส · รวม {fmtC(detail.totalQty ?? detail.records.length)} ชิ้น)
                   </div>
                   <div style={{ overflowX: 'auto' }}>
                     <table style={{ width: '100%', minWidth: 640, tableLayout: 'fixed', borderCollapse: 'collapse', fontSize: 11 }}>
@@ -427,6 +427,7 @@ function SkuDetailPanel({ masterSku, productKey, displayName, skuCount, startDat
                           <th style={{ padding: '8px 10px', textAlign: 'left', width: 74 }}>แบรนด์</th>
                           <th style={{ padding: '8px 10px', textAlign: 'left' }}>สินค้าที่เคลม</th>
                           <th style={{ padding: '8px 10px', textAlign: 'right', width: 86 }}>มูลค่า (฿)</th>
+                          <th style={{ padding: '8px 10px', textAlign: 'center', width: 56 }}>จำนวน</th>
                           <th style={{ padding: '8px 10px', textAlign: 'center', width: 54 }}>เสียหาย</th>
                           <th style={{ padding: '8px 10px', textAlign: 'center', width: 54 }}>ไม่ครบ</th>
                           <th style={{ padding: '8px 10px', textAlign: 'center', width: 42 }}>ผิด</th>
@@ -451,6 +452,11 @@ function SkuDetailPanel({ masterSku, productKey, displayName, skuCount, startDat
                               {isEditing
                                 ? <input type="number" value={editDraft.claim_value} onChange={e => setEditDraft({ ...editDraft, claim_value: e.target.value })} style={{ width: '100%', fontSize: 11, border: '1px solid #d9cdf0', borderRadius: 6, padding: '4px 6px', textAlign: 'right' }} placeholder="0" />
                                 : (rec.claim_value > 0 ? <span style={{ color: '#dc2626' }}>{`฿${fmtC(rec.claim_value)}`}</span> : <span style={{ color: '#d9cdf0' }}>—</span>)}
+                            </td>
+                            <td style={{ padding: '8px 10px', textAlign: 'center' }}>
+                              {isEditing
+                                ? <input type="number" min="1" value={editDraft.qty} onChange={e => setEditDraft({ ...editDraft, qty: e.target.value })} style={{ width: '100%', fontSize: 11, border: '1px solid #d9cdf0', borderRadius: 6, padding: '4px 6px', textAlign: 'center' }} />
+                                : (rec.qty > 1 ? <span style={{ fontWeight: 700 }}>{rec.qty} ชิ้น</span> : <span style={{ color: '#d9cdf0' }}>1</span>)}
                             </td>
                             {isEditing ? <>
                               <td style={{ padding: '8px 10px', textAlign: 'center' }}><input type="checkbox" checked={!!editDraft.is_damaged} onChange={e => setEditDraft({ ...editDraft, is_damaged: e.target.checked })} /></td>
@@ -515,7 +521,7 @@ const emptyClaimRow = (last) => ({
   _key: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
   date: last?.date || new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Bangkok' }),
   business: last?.business || BUSINESS_OPTIONS[0],
-  master_sku: '', claim_value: '', free_item: '',
+  master_sku: '', claim_value: '', qty: '1', free_item: '',
   is_damaged: false, is_incomplete: false, is_wrong_item: false, note: '',
 })
 
@@ -548,7 +554,7 @@ function AddClaimModal({ onClose, onSaved }) {
     e.preventDefault()
     const pasted = lines.map((line) => {
       const cols = line.split('\t')
-      const [date, skuRaw, claimValue, freeItem, note] = cols
+      const [date, skuRaw, claimValue, freeItem, note, qtyRaw] = cols
       const skuGuess = String(skuRaw || '').trim()
       const match = products.find((p) => p.master_sku.toLowerCase() === skuGuess.toLowerCase())
         || products.find((p) => p.display_name.toLowerCase().includes(skuGuess.toLowerCase()))
@@ -557,6 +563,7 @@ function AddClaimModal({ onClose, onSaved }) {
         date: date?.trim() || emptyClaimRow().date,
         master_sku: match?.master_sku || '',
         claim_value: (claimValue || '').trim(),
+        qty: (qtyRaw || '').trim() || '1',
         free_item: (freeItem || '').trim(),
         note: (note || '').trim(),
       }
@@ -593,7 +600,7 @@ function AddClaimModal({ onClose, onSaved }) {
         <div style={{ padding: '20px 24px 12px', borderBottom: '1px solid #f5f0fd', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <div style={{ fontSize: 16, fontWeight: 800, color: '#2a1f42' }}>เพิ่มเคลม</div>
-            <div style={{ fontSize: 11.5, color: '#8b7fa8', marginTop: 2 }}>เพิ่มได้หลายรายการพร้อมกัน หรือคัดลอกจากชีต/Excel มาวางได้เลย (คอลัมน์: วันที่, SKU, มูลค่า, เสียฟรี, หมายเหตุ)</div>
+            <div style={{ fontSize: 11.5, color: '#8b7fa8', marginTop: 2 }}>เพิ่มได้หลายรายการพร้อมกัน หรือคัดลอกจากชีต/Excel มาวางได้เลย (คอลัมน์: วันที่, SKU, มูลค่า, เสียฟรี, หมายเหตุ, จำนวน) — เสีย 1 สินค้าหลายชิ้นในเคสเดียว ใส่ "จำนวน" ที่แถวนั้นแถวเดียวได้ ไม่ต้องเพิ่มแถว</div>
           </div>
           <button type="button" onClick={onClose} style={{ background: '#f5f0fd', border: 'none', borderRadius: 8, padding: '6px 8px', cursor: 'pointer', color: '#6b5f8a', display: 'flex', alignItems: 'center' }}><X size={16} /></button>
         </div>
@@ -609,6 +616,7 @@ function AddClaimModal({ onClose, onSaved }) {
                 <th style={{ ...thStyle, width: 110 }}>ธุรกิจ</th>
                 <th style={{ ...thStyle, width: 220 }}>สินค้า</th>
                 <th style={{ ...thStyle, width: 100 }}>มูลค่า</th>
+                <th style={{ ...thStyle, width: 70 }}>จำนวน</th>
                 <th style={{ ...thStyle, width: 140 }}>เสียฟรี</th>
                 <th style={{ ...thStyle, width: 150 }}>สาเหตุ</th>
                 <th style={thStyle}>หมายเหตุ</th>
@@ -641,6 +649,7 @@ function AddClaimModal({ onClose, onSaved }) {
                       />
                     </td>
                     <td style={tdStyle}><input type="number" min="0" step="0.01" value={row.claim_value} onChange={(e) => patchRow(row._key, { claim_value: e.target.value })} style={cellStyle} placeholder="0" /></td>
+                    <td style={tdStyle}><input type="number" min="1" step="1" value={row.qty} onChange={(e) => patchRow(row._key, { qty: e.target.value })} style={cellStyle} title="จำนวนชิ้นที่เสียในเคสนี้ — ไม่นับเป็นหลายเคส" /></td>
                     <td style={tdStyle}>
                       <input
                         list="add-claim-free-items"
@@ -738,6 +747,7 @@ function AllSkusModal({ topSkus, onClose, onSelectSku }) {
                 <th style={{ padding: '10px 16px', textAlign: 'left', width: 36 }}>#</th>
                 <th style={{ padding: '10px 16px', textAlign: 'left' }}>สินค้า</th>
                 <th style={{ padding: '10px 16px', textAlign: 'right' }}>จำนวนเคส</th>
+                <th style={{ padding: '10px 16px', textAlign: 'right' }}>จำนวนชิ้น</th>
                 <th style={{ padding: '10px 16px', textAlign: 'right' }}>% เคลม/สินค้าออก</th>
                 <th style={{ padding: '10px 16px', textAlign: 'right' }}>มูลค่าทุนเสียหาย</th>
               </tr>
@@ -754,6 +764,7 @@ function AllSkusModal({ topSkus, onClose, onSelectSku }) {
                   <td style={{ padding: '11px 16px', color: i < 3 ? '#f59e0b' : '#8b7fa8', fontWeight: 700 }}>{i + 1}</td>
                   <td style={{ padding: '11px 16px', color: '#2d2440', fontWeight: 700 }}>{s.display_name || 'ไม่ระบุชื่อสินค้า'}</td>
                   <td style={{ padding: '11px 16px', textAlign: 'right', fontWeight: 700, color: '#dc2626' }}>{fmtC(s.count)}</td>
+                  <td style={{ padding: '11px 16px', textAlign: 'right', color: '#5c5578' }}>{fmtC(s.qty ?? s.count)}</td>
                   <ClaimRateCell item={s} padding="11px 16px" />
                   <td style={{ padding: '11px 16px', textAlign: 'right', color: '#5c5578' }}>฿{fmtC(s.value)}</td>
                 </tr>
@@ -863,6 +874,7 @@ function RecentClaimsPanel() {
                   <th style={{ padding: '10px 12px', textAlign: 'left' }}>สินค้าที่เคลม</th>
                   <th style={{ padding: '10px 12px', textAlign: 'left' }}>สาเหตุ</th>
                   <th style={{ padding: '10px 12px', textAlign: 'right' }}>มูลค่า (฿)</th>
+                  <th style={{ padding: '10px 12px', textAlign: 'center' }}>จำนวน</th>
                   <th style={{ padding: '10px 12px', textAlign: 'left' }}>หมายเหตุ</th>
                 </tr>
               </thead>
@@ -874,11 +886,12 @@ function RecentClaimsPanel() {
                     <td style={{ padding: '9px 12px', color: '#2d2440', fontWeight: 600 }}>{r.display_name || r.product_name || r.master_sku || '—'}</td>
                     <td style={{ padding: '9px 12px' }}>{reasonLabel(r)}</td>
                     <td style={{ padding: '9px 12px', textAlign: 'right', fontWeight: 700 }}>{r.claim_value > 0 ? <span style={{ color: '#dc2626' }}>฿{fmtC(r.claim_value)}</span> : <span style={{ color: '#d9cdf0' }}>—</span>}</td>
+                    <td style={{ padding: '9px 12px', textAlign: 'center' }}>{r.qty > 1 ? <span style={{ fontWeight: 700 }}>{r.qty} ชิ้น</span> : <span style={{ color: '#d9cdf0' }}>1</span>}</td>
                     <td style={{ padding: '9px 12px', color: '#8b7fa8' }}>{[r.free_item, r.note].filter(Boolean).join(' · ') || '—'}</td>
                   </tr>
                 ))}
                 {!filtered.length && (
-                  <tr><td colSpan={6} style={{ padding: 24, textAlign: 'center', color: '#8b7fa8' }}>ไม่พบรายการเคลม</td></tr>
+                  <tr><td colSpan={7} style={{ padding: 24, textAlign: 'center', color: '#8b7fa8' }}>ไม่พบรายการเคลม</td></tr>
                 )}
               </tbody>
             </table>
@@ -1244,6 +1257,7 @@ export default function ClaimsFull() {
                 <th style={{ padding: '10px 14px', textAlign: 'left' }}>#</th>
                 <th style={{ padding: '10px 14px', textAlign: 'left' }}>สินค้า</th>
                 <th style={{ padding: '10px 14px', textAlign: 'right' }}>จำนวนเคส</th>
+                <th style={{ padding: '10px 14px', textAlign: 'right' }}>จำนวนชิ้น</th>
                 <th style={{ padding: '10px 14px', textAlign: 'right' }}>% เคลม/สินค้าออก</th>
                 <th style={{ padding: '10px 14px', textAlign: 'right' }}>มูลค่าทุนเสียหาย</th>
               </tr>
@@ -1260,6 +1274,7 @@ export default function ClaimsFull() {
                   <td style={{ padding: '11px 14px', color: i < 3 ? '#f59e0b' : '#8b7fa8', fontWeight: i < 3 ? 800 : 400 }}>{i + 1}</td>
                   <td style={{ padding: '11px 14px', color: '#2d2440', fontWeight: 700 }}>{s.display_name || 'ไม่ระบุชื่อสินค้า'}</td>
                   <td style={{ padding: '11px 14px', textAlign: 'right', fontWeight: 700, color: '#dc2626' }}>{fmtC(s.count)}</td>
+                  <td style={{ padding: '11px 14px', textAlign: 'right', color: '#5c5578' }}>{fmtC(s.qty ?? s.count)}</td>
                   <ClaimRateCell item={s} />
                   <td style={{ padding: '11px 14px', textAlign: 'right', color: '#5c5578' }}>฿{fmtC(s.value)}</td>
                 </tr>
