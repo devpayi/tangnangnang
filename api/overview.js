@@ -12,6 +12,75 @@ const isReturned = (s = '') => String(s).toLowerCase().includes('return')
 const RED = 1.0
 const MIN_UNITS = 100
 
+// ── เตือนวันโปรเลขเบิ้ล (9.9 / 11.11 / 12.12 ...) — โผล่เฉพาะตอนใกล้ + ทำนายทีมเลิกงานดึก ──
+// สมมติทีมแพ็ค 4 คน เข้า 8:00 เลิกปกติ ~14:30 (6.5 ชม.) เพดานที่รับได้ 17:00
+const PACK = { start: 8, normalHours: 6.5, maxFinish: 17 }
+const isCampaignDate = (d) => { const [, m, dd] = String(d).split('-'); return m && dd && m === dd }
+const median = (a) => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y); return s[Math.floor(s.length / 2)] }
+const hhmm = (h) => `${String(Math.floor(h)).padStart(2, '0')}:${String(Math.round((h % 1) * 60)).padStart(2, '0')}`
+
+async function computeCampaignAlert() {
+  const meta = await getMetaCached()
+  const tabs = meta.sheets.map((s) => s.properties.title).filter((t) => t.startsWith('raw_orders'))
+  if (!tabs.length) return null
+  const vr = await batchGetValues(tabs.flatMap((t) => [`${t}!B:B`, `${t}!D:D`]))
+  const seen = new Set(); const byDay = new Map()
+  for (let i = 0; i < tabs.length; i++) {
+    const ids = vr[i * 2].values || [], dates = vr[i * 2 + 1].values || []
+    for (let j = 1; j < Math.max(ids.length, dates.length); j++) {
+      const id = String((ids[j] || [])[0] || '').replace(/^'/, '').trim()
+      const date = String((dates[j] || [])[0] || '').slice(0, 10)
+      if (!id || !date || seen.has(id)) continue          // นับทุกออเดอร์ (รวมยกเลิก = งานที่แพ็คไปแล้ว)
+      seen.add(id)
+      byDay.set(date, (byDay.get(date) || 0) + 1)
+    }
+  }
+  const dates = [...byDay.keys()].sort()
+  if (dates.length < 20) return null
+  const dnum = (s) => new Date(s).getTime() / 86400000
+  const campNums = dates.filter(isCampaignDate).map(dnum)
+  const nearCamp = (n) => campNums.some((c) => Math.abs(c - n) <= 2)
+
+  const mults = []
+  for (const d of dates.filter(isCampaignDate)) {
+    const c = dnum(d)
+    const base = dates.filter((x) => { const xn = dnum(x); return Math.abs(xn - c) >= 3 && Math.abs(xn - c) <= 12 && !nearCamp(xn) }).map((x) => byDay.get(x)).sort((a, b) => a - b)
+    if (base.length < 4) continue
+    const b = base[Math.floor(base.length / 2)]
+    if (b) mults.push(Math.round((byDay.get(d) / b) * 100) / 100)
+  }
+  const mult = median(mults.slice(-4).length >= 3 ? mults.slice(-4) : mults)
+  if (!mult) return null
+
+  const recent = dates.slice(-30).map((x) => byDay.get(x))
+  const recentAvg = Math.round(recent.reduce((a, b) => a + b, 0) / recent.length)
+
+  const todayStr = new Date().toISOString().slice(0, 10)
+  const y = +todayStr.slice(0, 4)
+  let next = null
+  for (const yy of [y, y + 1]) for (let mm = 1; mm <= 12; mm++) {
+    const s = `${yy}-${String(mm).padStart(2, '0')}-${String(mm).padStart(2, '0')}`
+    if (s >= todayStr && (!next || s < next)) next = s
+  }
+  if (!next) return null
+  const daysUntil = Math.round((new Date(next) - new Date(todayStr)) / 86400000)
+  const finishH = PACK.start + PACK.normalHours * mult
+  if (daysUntil > 7 || finishH <= PACK.maxFinish) return null   // โผล่เฉพาะใกล้ + จะเลิกดึก
+
+  return {
+    date: next, daysUntil, multiplier: mult,
+    predictedOrders: Math.round(recentAvg * mult),
+    finish: hhmm(finishH),
+  }
+}
+let campaignCache = { date: null, promise: null }
+function getCampaignAlertCached(today) {
+  if (campaignCache.date === today && campaignCache.promise) return campaignCache.promise
+  const p = computeCampaignAlert().catch(() => null)
+  campaignCache = { date: today, promise: p }
+  return p
+}
+
 // ---- แคช redAlerts (สินค้าเคลมสูงผิดปกติ) เป็นรายวัน ----
 // ส่วนนี้ต้องสแกนออเดอร์ย้อนหลัง "ทุกเดือน" ซึ่งหนักที่สุดในหน้าแรก แต่ตัวเลขไม่จำเป็นต้องเรียลไทม์
 // (เคลม/ยอดขายสะสมไม่เปลี่ยนเร็วขนาดนั้น) เลยคำนวณครั้งเดียวต่อวัน แล้วใช้ซ้ำตลอดวันนั้น
@@ -111,6 +180,7 @@ export default async function handler(req, res) {
 
     // redAlerts คำนวณครั้งเดียวต่อวัน (ดูคอมเมนต์ที่ redAlertsCache ด้านบน) — คำขอถัดๆ ไปในวันเดียวกันจะได้ผลลัพธ์ที่แคชไว้ทันที
     const redAlerts = await getRedAlertsCached(today, claims)
+    const campaignAlert = await getCampaignAlertCached(today)
 
     // ---- Performance: เป้า vs จริงเดือนนี้ (ย่อจาก /api/goals) ----
     const monthGoal = goalsRows.find((g) => g.month === monthPrefix) || {}
@@ -193,7 +263,7 @@ export default async function handler(req, res) {
       today,
       month: monthPrefix,
       performance,
-      urgent: { redAlerts, planOpenedToday: todayRows.length > 0 },
+      urgent: { redAlerts, planOpenedToday: todayRows.length > 0, campaignAlert },
       fg: fgSummary,
     })
   } catch (e) {

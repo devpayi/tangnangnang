@@ -378,7 +378,8 @@ export default function Overview({ onNavigate, isMobile = false }) {
   const { performance: p, urgent, fg } = data
   const headcountLow = headcount != null && headcount.count < MIN_HEADCOUNT
   const fgLowCount = fg?.lowCount || 0
-  const hasUrgent = urgent.redAlerts.length > 0 || headcountLow || fgLowCount > 0
+  const campaign = urgent.campaignAlert
+  const hasUrgent = urgent.redAlerts.length > 0 || headcountLow || fgLowCount > 0 || !!campaign
   const scrollCol = { ...glass, height: '100%', boxSizing: 'border-box', overflowY: 'auto', display: 'flex', flexDirection: 'column' }
 
   return (
@@ -454,6 +455,18 @@ export default function Overview({ onNavigate, isMobile = false }) {
                 </div>
               )}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {campaign && (
+                  <div style={{ background: 'linear-gradient(135deg, rgba(255,255,255,.8), rgba(254,215,170,.35))', border: '1px solid rgba(234,88,12,.35)', borderRadius: 14, padding: 10, flexShrink: 0, boxShadow: '0 2px 8px rgba(194,65,12,.08)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
+                      <IconBadge icon={AlertTriangle} tint="amber" />
+                      <span style={{ fontSize: 12, fontWeight: 800, color: '#9a3412' }}>วันโปร {campaign.date.slice(5).replace('-', '.')} อีก {campaign.daysUntil} วัน</span>
+                    </div>
+                    <div style={{ fontSize: 11, color: '#9a3412', lineHeight: 1.55 }}>
+                      งานจะเยอะเป็น ~{campaign.multiplier} เท่า (คาด ~{fmt(campaign.predictedOrders)} ออเดอร์) — ทีมน่าจะเลิกงานประมาณ <b>{campaign.finish} น.</b>
+                      <br />เตรียมโอที หรือส่งของเข้า Shopee (FBS) ไว้ล่วงหน้า
+                    </div>
+                  </div>
+                )}
                 {headcountLow && (
                   <button onClick={() => onNavigate?.('workforce')} style={{ background: 'rgba(255,255,255,.8)', borderRadius: 14, textAlign: 'left', cursor: 'pointer', border: 'none', padding: 10, boxShadow: '0 2px 8px rgba(15,23,42,.05)', flexShrink: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}><IconBadge icon={Users} tint="red" /><span style={{ fontSize: 12, fontWeight: 700, color: '#334155' }}>กำลังคนวันนี้ต่ำกว่าขั้นต่ำ</span></div>
