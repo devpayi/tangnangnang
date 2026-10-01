@@ -175,9 +175,13 @@ function generateCalendarPresence(personMap, leaveRows, dayOffMap = {}, onlyCode
 
 // ปฏิทินบ้านล่าง — ใช้ตารางพนักงานปี 2026 ในระบบ + hr_leave (อ่านอย่างเดียว) เพื่อคำนวณคนที่มาทำงานจริงต่อวัน
 export async function getCalendarPresence(personMap, overrideScopeCodes = Object.keys(personMap), applyLeaves = true, officeCodes = []) {
-  const [snapshotRows, overrideRows, leaveRows, dayOffMap] = await Promise.all([
-    getSheet('workforce_schedule_snapshot'), getSheet('workforce_schedule_overrides'), getSheet('hr_leave'), getDayOffMap(),
+  const [snapshotRows, overrideRows, leaveRows, dayOffMap, holidayRows] = await Promise.all([
+    getSheet('workforce_schedule_snapshot'), getSheet('workforce_schedule_overrides'), getSheet('hr_leave'), getDayOffMap(), getHolidayRows(),
   ])
+  // วันหยุดนักขัตฤกษ์ = วันหยุดของทุกคน (owner, 2026-10-01) — ไม่ใช่แค่ป้ายแจ้งเตือน ตัดคนออกจาก roster
+  // ทุกวันที่อยู่ใน workforce_holidays เลย ส่วน "X ชนวันหยุด" (getHolidaysWithConflicts) ยังเป็นแค่ข้อความ
+  // แจ้งว่าวันหยุดนักขัตตรงกับวันหยุดประจำสัปดาห์ของใครพอดี ไม่เกี่ยวกับ roster ตรงนี้ ไม่แตะ
+  const holidayDates = new Set(holidayRows.map((h) => h.date).filter(Boolean))
   const swapBackMap = buildSwapBackDates(leaveRows)
   let baseRows = (snapshotRows.length ? snapshotRows : generateCalendarPresence(personMap, [], dayOffMap, null, swapBackMap))
     .filter((r) => personMap[String(r.code || '').toUpperCase()])
@@ -195,12 +199,14 @@ export async function getCalendarPresence(personMap, overrideScopeCodes = Object
     }
   }
   baseRows = applyScheduleOverrides({ baseRows, overrideRows, personMap, overrideScopeCodes, officeCodes, dayOffMap })
+  baseRows = baseRows.filter((r) => !holidayDates.has(r.date))
   {
     const presentKeys = new Set(baseRows.map((r) => `${r.date}|${r.code}`))
     for (const [code, dates] of Object.entries(swapBackMap)) {
       const person = personMap[code]
       if (!person) continue
       for (const date of dates) {
+        if (holidayDates.has(date)) continue
         const key = `${date}|${code}`
         if (presentKeys.has(key)) continue
         presentKeys.add(key)
