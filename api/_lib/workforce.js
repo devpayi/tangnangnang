@@ -173,6 +173,8 @@ function generateCalendarPresence(personMap, leaveRows, dayOffMap = {}, onlyCode
   return result
 }
 
+const HOLIDAY_RULE_SINCE = '2026-10-01'
+
 // ปฏิทินบ้านล่าง — ใช้ตารางพนักงานปี 2026 ในระบบ + hr_leave (อ่านอย่างเดียว) เพื่อคำนวณคนที่มาทำงานจริงต่อวัน
 export async function getCalendarPresence(personMap, overrideScopeCodes = Object.keys(personMap), applyLeaves = true, officeCodes = []) {
   const [snapshotRows, overrideRows, leaveRows, dayOffMap, holidayRows] = await Promise.all([
@@ -198,8 +200,11 @@ export async function getCalendarPresence(personMap, overrideScopeCodes = Object
       baseRows = [...baseRows, ...filler]
     }
   }
-  baseRows = applyScheduleOverrides({ baseRows, overrideRows, personMap, overrideScopeCodes, officeCodes, dayOffMap })
+  // ตัดวันนักขัตก่อนใส่ override — คนที่หัวหน้าติ๊กเลือก/โอทีวันในวันนักขัตเองต้องไม่ถูกตัดทิ้งตามไปด้วย
+  // แต่ override ที่บันทึกก่อนกฎวันหยุด (1 ต.ค.) บนวันนักขัต เป็นตารางเก่า/ค่าเริ่มต้น ไม่ใช่การติ๊กเอง — ข้าม
   baseRows = baseRows.filter((r) => !holidayDates.has(r.date))
+  const effectiveOverrides = overrideRows.filter((o) => !holidayDates.has(String(o.date || '')) || String(o.updated_at || '') >= HOLIDAY_RULE_SINCE)
+  baseRows = applyScheduleOverrides({ baseRows, overrideRows: effectiveOverrides, personMap, overrideScopeCodes, officeCodes, dayOffMap })
   {
     const presentKeys = new Set(baseRows.map((r) => `${r.date}|${r.code}`))
     for (const [code, dates] of Object.entries(swapBackMap)) {
