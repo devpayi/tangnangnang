@@ -509,7 +509,7 @@ function SkuDetailPanel({ masterSku, productKey, displayName, skuCount, startDat
 // ============================================================
 // COMPONENT: กรอกเคลมเองจากหน้าเว็บ (ไม่ต้องผ่าน Excel import) — owner ขอ 2026-08-01
 // ============================================================
-const BUSINESS_OPTIONS = ['Payi', 'Payi Outlet', 'กรอบรูป']
+const BUSINESS_OPTIONS = ['Payi', 'กรอบรูป']
 // แถวว่างใหม่ — สืบ วันที่/ธุรกิจ จากแถวล่าสุด (สะดวกเวลากรอกทีละหลายแถวของวันเดียวกัน) เหมือนลากสูตรในชีท
 const emptyClaimRow = (last) => ({
   _key: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -905,7 +905,7 @@ export default function ClaimsFull() {
   const [err, setErr]           = useState(null)
   const [startDate, setStart]   = useState('')
   const [endDate, setEnd]       = useState('')
-  const [business] = useState('')
+  const [business, setBusiness] = useState('')
   const [productInput, setProductInput] = useState('')
   const [productFilter, setProductFilter] = useState('')
   const [reasonFilter, setReasonFilter] = useState('')
@@ -1085,6 +1085,10 @@ export default function ClaimsFull() {
             <input type="date" value={startDate} onChange={e => setStart(e.target.value)} style={{ border: '1px solid #e5dbf5', borderRadius: 10, padding: '8px 12px', fontSize: 12, color: '#4a4460', background: '#f7f2fc' }} />
             <span style={{ color: '#8b7fa8', fontSize: 12 }}>ถึง</span>
             <input type="date" value={endDate} onChange={e => setEnd(e.target.value)} style={{ border: '1px solid #e5dbf5', borderRadius: 10, padding: '8px 12px', fontSize: 12, color: '#4a4460', background: '#f7f2fc' }} />
+            <select value={business} onChange={e => setBusiness(e.target.value)} style={{ border: '1px solid #e5dbf5', borderRadius: 10, padding: '8px 12px', fontSize: 12 }}>
+              <option value="">ทุกธุรกิจ</option>
+              {BUSINESS_OPTIONS.map(b => <option key={b} value={b}>{b}</option>)}
+            </select>
             <input value={productInput} onChange={e => setProductInput(e.target.value)} placeholder="ค้นหาสินค้า" style={{ border: '1px solid #e5dbf5', borderRadius: 10, padding: '8px 12px', fontSize: 12 }} />
             <select value={reasonFilter} onChange={e => setReasonFilter(e.target.value)} style={{ border: '1px solid #e5dbf5', borderRadius: 10, padding: '8px 12px', fontSize: 12 }}><option value="">ทุกสาเหตุ</option><option value="damaged">เสียหาย</option><option value="incomplete">ส่งไม่ครบ</option><option value="wrong">ส่งผิด</option><option value="unspecified">ไม่ระบุ</option></select>
             <button onClick={load} disabled={loading} style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#2a1f42', color: '#fff', border: 'none', borderRadius: 10, padding: '9px 18px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>

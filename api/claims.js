@@ -22,10 +22,12 @@ const claimGroup = (r, overrideMap, redirectMap) => deriveGroup(r.display_name |
 // ชื่อธุรกิจในชีทไม่ตรง case กัน (ของเก่า import "PAYI" ตัวใหญ่ล้วน, ฟอร์มกรอกเอง/มือใหม่ใช้ "Payi") —
 // ทำให้ตารางแยกตามแบรนด์แยกเป็นคนละคอลัมน์ทั้งที่เป็นธุรกิจเดียวกัน จับคู่แบบไม่สนตัวพิมพ์เล็กใหญ่ตรงนี้ที่เดียว
 // เพื่อให้ทุก view (monthly by-business, summary, sku) เห็นชื่อธุรกิจสม่ำเสมอกัน โดยไม่ต้องแก้ข้อมูลเดิมในชีท
-const BUSINESS_CANON = ['Payi', 'Payi Outlet', 'กรอบรูป']
+const BUSINESS_CANON = ['Payi', 'กรอบรูป']
 const normalizeBusiness = (v) => {
   const trimmed = String(v || '').trim()
   if (!trimmed) return trimmed
+  // Payi Outlet นับรวมเป็น Payi (เจ้าของไม่ต้องการแยกเคลมสองตัวนี้) — รวมตอนอ่าน ไม่แก้ข้อมูลเดิมในชีท
+  if (/^payi\s*outlet$/i.test(trimmed)) return 'Payi'
   const canon = BUSINESS_CANON.find((b) => b.toLowerCase() === trimmed.toLowerCase())
   return canon || trimmed
 }
