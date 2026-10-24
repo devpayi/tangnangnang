@@ -801,7 +801,7 @@ function RecentClaimsPanel() {
 
   useEffect(() => { setLimit(100) }, [month, business])
 
-  const startEdit = (r) => { setEditingId(r.id); setEditDraft({ is_damaged: r.is_damaged, is_incomplete: r.is_incomplete, is_wrong_item: r.is_wrong_item, note: r.note || '', free_item: r.free_item || '', claim_value: r.claim_value || '' }) }
+  const startEdit = (r) => { setEditingId(r.id); setEditDraft({ date: r.date || '', business: r.business || 'Payi', is_damaged: r.is_damaged, is_incomplete: r.is_incomplete, is_wrong_item: r.is_wrong_item, note: r.note || '', free_item: r.free_item || '', claim_value: r.claim_value || '' }) }
   const cancelEdit = () => { setEditingId(''); setEditDraft({}) }
   const saveEdit = async (id) => {
     setSaving(true)
@@ -810,7 +810,7 @@ function RecentClaimsPanel() {
       const d = await r.json()
       if (!d.success) { alert(d.error || 'บันทึกไม่สำเร็จ'); return }
       // อัปเดตแถวในตารางทันที ไม่ต้องรอโหลดใหม่ (view recent มี cache ฝั่ง server)
-      setRecords((rs) => rs.map((x) => (x.id === id ? { ...x, is_damaged: !!editDraft.is_damaged, is_incomplete: !!editDraft.is_incomplete, is_wrong_item: !!editDraft.is_wrong_item, note: editDraft.note, free_item: editDraft.free_item, claim_value: Number(editDraft.claim_value) || 0 } : x)))
+      setRecords((rs) => rs.map((x) => (x.id === id ? { ...x, date: editDraft.date || x.date, business: editDraft.business || x.business, is_damaged: !!editDraft.is_damaged, is_incomplete: !!editDraft.is_incomplete, is_wrong_item: !!editDraft.is_wrong_item, note: editDraft.note, free_item: editDraft.free_item, claim_value: Number(editDraft.claim_value) || 0 } : x)))
       cancelEdit()
     } catch (e) { alert(e.message) } finally { setSaving(false) }
   }
@@ -872,7 +872,7 @@ function RecentClaimsPanel() {
       {!loading && !err && (
         <>
           <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', minWidth: 700, borderCollapse: 'collapse', fontSize: 12 }}>
+            <table style={{ width: '100%', minWidth: 860, borderCollapse: 'collapse', fontSize: 12 }}>
               <thead>
                 <tr style={{ background: '#f7f2fc', borderBottom: '1px solid #e5dbf5', color: '#6b5f8a' }}>
                   <th style={{ padding: '10px 12px', textAlign: 'left' }}>วันที่</th>
@@ -891,8 +891,17 @@ function RecentClaimsPanel() {
                   const flagBox = (key, label, color) => <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 5, color, fontWeight: 600, whiteSpace: 'nowrap' }}><input type="checkbox" checked={!!editDraft[key]} onChange={(e) => setEditDraft({ ...editDraft, [key]: e.target.checked })} />{label}</label>
                   return (
                   <tr key={r.id || i} style={{ borderBottom: '1px solid #f5f0fd', background: isEditing ? '#f2edfc' : 'transparent' }}>
-                    <td style={{ padding: '9px 12px', color: '#6b5f8a' }}>{r.date}</td>
-                    <td style={{ padding: '9px 12px', color: '#2d2440' }}>{r.business}</td>
+                    {isEditing ? <>
+                      <td style={{ padding: '9px 12px' }}><input type="date" value={editDraft.date} onChange={(e) => setEditDraft({ ...editDraft, date: e.target.value })} style={{ ...cellInput, minWidth: 138 }} /></td>
+                      <td style={{ padding: '9px 12px' }}>
+                        <select value={editDraft.business} onChange={(e) => setEditDraft({ ...editDraft, business: e.target.value })} style={{ ...cellInput, minWidth: 96 }}>
+                          {RECENT_BUSINESS_OPTIONS.filter(Boolean).map((b) => <option key={b} value={b}>{b}</option>)}
+                        </select>
+                      </td>
+                    </> : <>
+                      <td style={{ padding: '9px 12px', color: '#6b5f8a' }}>{r.date}</td>
+                      <td style={{ padding: '9px 12px', color: '#2d2440' }}>{r.business}</td>
+                    </>}
                     <td style={{ padding: '9px 12px', color: '#2d2440', fontWeight: 600 }}>{r.display_name || r.product_name || r.master_sku || '—'}</td>
                     {isEditing ? <>
                       <td style={{ padding: '9px 12px' }}><div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>{flagBox('is_damaged', 'เสียหาย', FLAG_COLORS.damaged)}{flagBox('is_incomplete', 'ไม่ครบ', FLAG_COLORS.incomplete)}{flagBox('is_wrong_item', 'ผิดรายการ', FLAG_COLORS.wrong)}</div></td>

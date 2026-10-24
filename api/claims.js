@@ -146,8 +146,11 @@ export default async function handler(req, res) {
       const idx = current.findIndex((r) => r.id === id)
       if (idx < 0) return res.status(404).json({ success: false, error: 'ไม่พบเคลมนี้ (อาจถูกลบไปแล้ว)' })
       const b = req.body || {}
+      if (b.date !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(String(b.date))) return res.status(400).json({ success: false, error: 'รูปแบบวันที่ไม่ถูกต้อง' })
       const updated = {
         ...current[idx],
+        date: b.date !== undefined ? String(b.date) : current[idx].date,
+        business: b.business !== undefined && String(b.business).trim() ? String(b.business).trim() : current[idx].business,
         is_damaged: b.is_damaged ? '1' : '',
         is_incomplete: b.is_incomplete ? '1' : '',
         is_wrong_item: b.is_wrong_item ? '1' : '',
