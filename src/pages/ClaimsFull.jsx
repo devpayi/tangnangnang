@@ -795,8 +795,25 @@ function RecentClaimsPanel() {
   const [search, setSearch] = useState('')
   const [month, setMonth] = useState('')
   const [business, setBusiness] = useState('')
+  const [editingId, setEditingId] = useState('')
+  const [editDraft, setEditDraft] = useState({})
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => { setLimit(100) }, [month, business])
+
+  const startEdit = (r) => { setEditingId(r.id); setEditDraft({ is_damaged: r.is_damaged, is_incomplete: r.is_incomplete, is_wrong_item: r.is_wrong_item, note: r.note || '', free_item: r.free_item || '', claim_value: r.claim_value || '' }) }
+  const cancelEdit = () => { setEditingId(''); setEditDraft({}) }
+  const saveEdit = async (id) => {
+    setSaving(true)
+    try {
+      const r = await fetch(`${API_BASE_C}/claims?view=update-claim`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, ...editDraft }) })
+      const d = await r.json()
+      if (!d.success) { alert(d.error || 'บันทึกไม่สำเร็จ'); return }
+      // อัปเดตแถวในตารางทันที ไม่ต้องรอโหลดใหม่ (view recent มี cache ฝั่ง server)
+      setRecords((rs) => rs.map((x) => (x.id === id ? { ...x, is_damaged: !!editDraft.is_damaged, is_incomplete: !!editDraft.is_incomplete, is_wrong_item: !!editDraft.is_wrong_item, note: editDraft.note, free_item: editDraft.free_item, claim_value: Number(editDraft.claim_value) || 0 } : x)))
+      cancelEdit()
+    } catch (e) { alert(e.message) } finally { setSaving(false) }
+  }
 
   useEffect(() => {
     let alive = true
@@ -864,21 +881,43 @@ function RecentClaimsPanel() {
                   <th style={{ padding: '10px 12px', textAlign: 'left' }}>สาเหตุ</th>
                   <th style={{ padding: '10px 12px', textAlign: 'right' }}>มูลค่า (฿)</th>
                   <th style={{ padding: '10px 12px', textAlign: 'left' }}>หมายเหตุ</th>
+                  <th style={{ padding: '10px 12px', width: 70 }}></th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((r, i) => (
-                  <tr key={r.id || i} style={{ borderBottom: '1px solid #f5f0fd' }}>
+                {filtered.map((r, i) => {
+                  const isEditing = r.id && editingId === r.id
+                  const cellInput = { width: '100%', fontSize: 12, border: '1px solid #d9cdf0', borderRadius: 6, padding: '5px 7px', boxSizing: 'border-box' }
+                  const flagBox = (key, label, color) => <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 5, color, fontWeight: 600, whiteSpace: 'nowrap' }}><input type="checkbox" checked={!!editDraft[key]} onChange={(e) => setEditDraft({ ...editDraft, [key]: e.target.checked })} />{label}</label>
+                  return (
+                  <tr key={r.id || i} style={{ borderBottom: '1px solid #f5f0fd', background: isEditing ? '#f2edfc' : 'transparent' }}>
                     <td style={{ padding: '9px 12px', color: '#6b5f8a' }}>{r.date}</td>
                     <td style={{ padding: '9px 12px', color: '#2d2440' }}>{r.business}</td>
                     <td style={{ padding: '9px 12px', color: '#2d2440', fontWeight: 600 }}>{r.display_name || r.product_name || r.master_sku || '—'}</td>
-                    <td style={{ padding: '9px 12px' }}>{reasonLabel(r)}</td>
-                    <td style={{ padding: '9px 12px', textAlign: 'right', fontWeight: 700 }}>{r.claim_value > 0 ? <span style={{ color: '#dc2626' }}>฿{fmtC(r.claim_value)}</span> : <span style={{ color: '#d9cdf0' }}>—</span>}</td>
-                    <td style={{ padding: '9px 12px', color: '#8b7fa8' }}>{[r.free_item, r.note].filter(Boolean).join(' · ') || '—'}</td>
+                    {isEditing ? <>
+                      <td style={{ padding: '9px 12px' }}><div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>{flagBox('is_damaged', 'เสียหาย', FLAG_COLORS.damaged)}{flagBox('is_incomplete', 'ไม่ครบ', FLAG_COLORS.incomplete)}{flagBox('is_wrong_item', 'ผิดรายการ', FLAG_COLORS.wrong)}</div></td>
+                      <td style={{ padding: '9px 12px' }}><input type="number" value={editDraft.claim_value} onChange={(e) => setEditDraft({ ...editDraft, claim_value: e.target.value })} style={{ ...cellInput, width: 90, textAlign: 'right' }} placeholder="0" /></td>
+                      <td style={{ padding: '9px 12px' }}>
+                        <input value={editDraft.free_item} onChange={(e) => setEditDraft({ ...editDraft, free_item: e.target.value })} style={{ ...cellInput, marginBottom: 4 }} placeholder="เสียฟรี" />
+                        <input value={editDraft.note} onChange={(e) => setEditDraft({ ...editDraft, note: e.target.value })} style={cellInput} placeholder="หมายเหตุ" />
+                      </td>
+                      <td style={{ padding: '9px 12px', whiteSpace: 'nowrap' }}>
+                        <button onClick={() => saveEdit(r.id)} disabled={saving} title="บันทึก" style={{ border: 0, background: '#16a34a', color: '#fff', borderRadius: 6, padding: '5px 7px', cursor: 'pointer', marginRight: 4 }}><Check size={13} /></button>
+                        <button onClick={cancelEdit} disabled={saving} title="ยกเลิก" style={{ border: 0, background: '#e5dbf5', color: '#5c5578', borderRadius: 6, padding: '5px 7px', cursor: 'pointer' }}><X size={13} /></button>
+                      </td>
+                    </> : <>
+                      <td style={{ padding: '9px 12px' }}>{reasonLabel(r)}</td>
+                      <td style={{ padding: '9px 12px', textAlign: 'right', fontWeight: 700 }}>{r.claim_value > 0 ? <span style={{ color: '#dc2626' }}>฿{fmtC(r.claim_value)}</span> : <span style={{ color: '#d9cdf0' }}>—</span>}</td>
+                      <td style={{ padding: '9px 12px', color: '#8b7fa8' }}>{[r.free_item, r.note].filter(Boolean).join(' · ') || '—'}</td>
+                      <td style={{ padding: '9px 12px', textAlign: 'center' }}>
+                        {r.id && <button onClick={() => startEdit(r)} title="แก้ไข" style={{ border: 0, background: '#f5f0fd', color: '#7c6fd6', borderRadius: 6, padding: '5px 7px', cursor: 'pointer' }}><Pencil size={13} /></button>}
+                      </td>
+                    </>}
                   </tr>
-                ))}
+                  )
+                })}
                 {!filtered.length && (
-                  <tr><td colSpan={6} style={{ padding: 24, textAlign: 'center', color: '#8b7fa8' }}>ไม่พบรายการเคลม</td></tr>
+                  <tr><td colSpan={7} style={{ padding: 24, textAlign: 'center', color: '#8b7fa8' }}>ไม่พบรายการเคลม</td></tr>
                 )}
               </tbody>
             </table>
